@@ -102,7 +102,7 @@ doMonteCarlo <- function(nsim, T, n, beta, DGP = "K3", endogenous = FALSE, error
                                    results$Eup$b2.bias[i]^2 + results$Eup$sd2[i]^2)/2 
     
     # Perform estimation using method 3 (Within)
-    Within.fit <- plm(data_plm$Y ~ data_plm$X_1 + data_plm$X_2 -1, data = data_plm,  model = "within", effects = "twoways")
+    Within.fit <- plm(data_plm$Y ~ data_plm$X_1 + data_plm$X_2 -1, data = data_plm,  model = "within", effects = "individual")
     
     # Save results
     results$Within$b1[i] <- Within.fit$coefficients[1]
