@@ -11,23 +11,33 @@ calculate_means <- function(results, path, estimator) {
   return(list(b1_mean = b1_mean, b2_mean = b2_mean, sd1_mean = sd1_mean, sd2_mean = sd2_mean, mse_mean = mse_mean))
 }
 
-# Specify the list of paths and estimators
-paths <- c("T12_n30_nsim100_K1", "T30_n30_nsim100_K1", "T12_n100_nsim100_K1", "T30_n100_nsim100_K1",
-           "T12_n300_nsim50_K1","T30_n300_nsim50_K1" )
-estimators <- c("Eup", "Within", "KSS")
-
-# Create an empty list to store the results
-all_means_list <- list()
-
-# Loop through each path and estimator
-for (path in paths) {
-  means_list <- list()
-  for (estimator in estimators) {
-    means_list[[estimator]] <- calculate_means(all_results_homo, path, estimator)
+calculate_means_for_paths_and_estimators <- function(all_results, paths = c("T12_n30_nsim1000_K1", "T30_n30_nsim1000_K1", "T12_n100_nsim1000_K1", "T30_n100_nsim1000_K1",
+                                                                            "T12_n300_nsim500_K1","T30_n300_nsim500_K1" ), estimators = c("Eup", "Within", "KSS")) {
+  #' Calculate means for specified paths and estimators
+  #'
+  #' This function loops through each specified path and estimator,
+  #' and calculates means using a custom function `calculate_means`.
+  #'
+  #' @param all_results_homo A data structure containing the results.
+  #' @param paths A vector of strings representing the paths to be processed.
+  #' @param estimators A vector of strings representing the estimators to be processed.
+  #'
+  #' @return A list containing the means for each combination of path and estimator.
+  
+  # Create an empty list to store the results
+  all_means_list <- list()
+  
+  # Loop through each path and estimator
+  for (path in paths) {
+    means_list <- list()
+    for (estimator in estimators) {
+      means_list[[estimator]] <- calculate_means(all_results, path, estimator)
+    }
+    all_means_list[[path]] <- means_list
   }
-  all_means_list[[path]] <- means_list
+  
+  return(all_means_list)
 }
-
 
 
 generate_latex_table <- function(all_means_list){
