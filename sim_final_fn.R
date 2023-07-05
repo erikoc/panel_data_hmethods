@@ -11,8 +11,8 @@ calculate_means <- function(results, path, estimator) {
   return(list(b1_mean = b1_mean, b2_mean = b2_mean, sd1_mean = sd1_mean, sd2_mean = sd2_mean, mse_mean = mse_mean))
 }
 
-calculate_means_for_paths_and_estimators <- function(all_results, paths = c("T12_n30_nsim1000_K1", "T30_n30_nsim1000_K1", "T12_n100_nsim1000_K1", "T30_n100_nsim1000_K1",
-                                                                            "T12_n300_nsim500_K1","T30_n300_nsim500_K1" ), estimators = c("Eup", "Within", "KSS")) {
+calculate_means_for_paths_and_estimators <- function(all_results, paths = c("T12_n30_nsim100_K1", "T30_n30_nsim100_K1", "T12_n100_nsim100_K1", "T30_n100_nsim100_K1",
+                                                                            "T12_n300_nsim50_K1","T30_n300_nsim50_K1" ), estimators = c("Eup", "Within", "KSS")) {
   #' Calculate means for specified paths and estimators
   #'
   #' This function loops through each specified path and estimator,
@@ -253,40 +253,4 @@ create_plots <- function(results_type, DGP) {
   grid.arrange(plot1, plot2, plot5, plot3, plot4, plot6, ncol=3)
 }
 
-
-library(xtable)
-
-create_latex_table <- function(results_type, DGP) {
-  # Calculate the mean values
-  mean_values <- data.frame()
-  
-  combinations <- list(
-    "T12_n30_nsim100_",
-    "T30_n30_nsim100_",
-    "T12_n100_nsim100_",
-    "T30_n100_nsim100_",
-    "T12_n300_nsim50_", 
-    "T30_n300_nsim50_"
-  )
-  
-  variables <- c("b1", "b2", "sd1", "sd2", "mse", "b1.bias", "b2.bias", "mse.effects")
-  
-  for (combination in combinations) {
-    for (var in variables) {
-      mean_values[paste(combination[1], var, sep="")] <- mean(results_type[[paste(combination[1], DGP, sep="")]]$KSS[[var]])
-      mean_values[paste(combination[2], var, sep="")] <- mean(results_type[[paste(combination[2], DGP, sep="")]]$KSS[[var]])
-    }
-  }
-  
-  # Create LaTeX table
-  latex_table <- xtable(mean_values)
-  return(latex_table)
-}
-
-# Example usage
-results_type <- all_results_homo  # Replace with your actual results_type
-DGP <- "K3"  # Replace with your desired DGP
-
-table <- create_latex_table(results_type, DGP)
-print(table, type = "latex")
 

@@ -184,6 +184,81 @@ generate_V4 <- function(T, n) {
 
 
 
+generate_V5 <- function(T,n){
+  #' Generates the individual effects V using DGP B1
+  #'
+  #' This function generates the individual effects V for a panel data model using DGP K4.
+  #'
+  #' @param T The number of time periods.
+  #' @param n The number of individuals.
+  #'
+  #' @return The matrix V representing the individual effects.
+  
+  f_1 <- rnorm(T, mean = 0, sd = 1)
+  f_2 <- rnorm(T, mean = 0, sd = 1)
+  
+  lamb_1 <- rnorm(n, mean = 0, sd = 1)
+  lamb_2 <- rnorm(n, mean = 0, sd = 1)
+  
+  for (i in 1:n) {
+    v_i <- matrix(NA, nrow = T, ncol = 1)
+    for (t in 1:T) {
+      v_i[t] <- lamb_1[i]*f_1[t] + lamb_2[i] * f_2[t]
+    }
+    v_list[[i]] <- v_i
+  }
+  
+  V <- do.call(rbind, v_list)
+  
+  return(V)
+}
+
+
+
+
+
+generate_V6 <- function(T, n, mu = 0.5, sigma = 3) {
+  #' Generates the individual effects V using DGP E2 incorporating Brownian motion with drift
+  #'
+  #' This function generates the individual effects V for a panel data model using Brownian motion with drift.
+  #'
+  #' @param T The number of time periods.
+  #' @param n The number of individuals.
+  #' @param mu The drift term.
+  #' @param sigma The volatility term.
+  #'
+  #' @return The matrix V representing the individual effects.
+  
+  # Creating common time factor (Brownian motion with drift)
+  r <- rep(NA, T)
+  r[1] <- rnorm(1, mean = 0, sd = 1) * sigma + mu
+  
+  for (t in 2:T) {
+    r[t] <- r[t - 1] + rnorm(1, mean = 0, sd = 1) * sigma + mu
+  }
+  
+  # Creating individual loading parameters
+  phi <- rnorm(n, mean = 0, sd = 1) * 3
+  
+  # Generating time-invariant error terms
+  v_list <- vector("list", n)
+  
+  for (i in 1:n) {
+    v_i <- matrix(NA, nrow = T, ncol = 1)
+    for (t in 1:T) {
+      v_i[t] <- phi[i] * r[t]
+    }
+    v_list[[i]] <- v_i
+  }
+  
+  # Combining the individual effects into a matrix
+  V <- do.call(rbind, v_list)
+  
+  return(V)
+}
+
+
+
 endogenous_X <- function(T, n, X, V, rho = 0.5) {
   #' Generates the endogenous variables X with correlated shocks
   #'
@@ -310,6 +385,10 @@ DataGeneratingFunction <- function(T, n, beta, DGP, endogenous = FALSE, error = 
     V <- generate_V3(T, n)
   } else if (DGP == "K4") {
     V <- generate_V4(T, n)
+  } else if (DGP == "B1") {
+  V <- generate_V5(T,n)
+  } else if (DGP == "E1") {
+  V <- generate_V6(T,n)
   }
   
   # Create endogenous regressors, when specified
