@@ -200,6 +200,9 @@ generate_V5 <- function(T,n){
   lamb_1 <- rnorm(n, mean = 0, sd = 1)
   lamb_2 <- rnorm(n, mean = 0, sd = 1)
   
+  # Generating time-invariant error terms
+  v_list <- vector("list", n)
+  
   for (i in 1:n) {
     v_i <- matrix(NA, nrow = T, ncol = 1)
     for (t in 1:T) {
@@ -212,9 +215,6 @@ generate_V5 <- function(T,n){
   
   return(V)
 }
-
-
-
 
 
 generate_V6 <- function(T, n, mu = 0.5, sigma = 3) {
