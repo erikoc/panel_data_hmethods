@@ -1,0 +1,168 @@
+---
+title: "Simulation Results"
+author: "Erik Ortiz Covarrubias"
+date: "2023-07-07"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Sourcing functions:
+
+```{r}
+source("sim_dgp_fn.R")
+source("sim_montecarlo_fn.R")
+source("sim_final_fn.R")
+```
+
+
+# Benchmark scenarios
+
+## 1. Exogenous regressors, homoskedastic error terms 
+```{r}
+
+n <- c(30, 100, 300)
+T <- c(12, 30)
+beta <- c(0.5, 0.5)
+DGPs <- c("K1", "K2", "K3", "K4", "B1", "E1")
+
+# Create an empty list to store the results
+all_results_bex <- list()
+
+# Iterate over the combinations of T, n, and nsim
+for (T_val in T) {
+  for (n_val in n) {
+    # Determine the value of nsim based on the current n
+     nsim_val <- ifelse(n_val == 300, 500, 1000)
+    
+    # Iterate over the DGP types
+    for (DGP_type in DGPs) {
+      # Run the doMonteCarlo function for the current combination
+      results <- doMonteCarlo(nsim_val, T_val, n_val, beta, DGP_type, endogenous = FALSE, error = "homo", rho = 0.5)
+      
+      # Create a label for the current combination
+      label <- paste0("T", T_val, "_n", n_val, "_nsim", nsim_val, "_", DGP_type)
+      
+      # Store the results in the list with the label
+      all_results_bex[[label]] <- results
+    }
+  }
+}
+```
+## 2. Endogenous regressors, homoskedastic error terms 
+
+```{r}
+
+n <- c(30, 100, 300)
+T <- c(12, 30)
+beta <- c(0.5, 0.5)
+DGPs <- c("K1", "K2", "K3", "K4", "B1", "E1")
+
+# Create an empty list to store the results
+all_results_bhet <- list()
+
+# Iterate over the combinations of T, n, and nsim
+for (T_val in T) {
+  for (n_val in n) {
+    # Determine the value of nsim based on the current n
+     nsim_val <- ifelse(n_val == 300, 50, 100)
+    
+    # Iterate over the DGP types
+    for (DGP_type in DGPs) {
+      # Run the doMonteCarlo function for the current combination
+      results <- doMonteCarlo(nsim_val, T_val, n_val, beta, DGP_type, endogenous = TRUE, error = "homo", rho = 0.5)
+      
+      # Create a label for the current combination
+      label <- paste0("T", T_val, "_n", n_val, "_nsim", nsim_val, "_", DGP_type)
+      
+      # Store the results in the list with the label
+      all_results_bhet[[label]] <- results
+    }
+  }
+}
+```
+
+
+## Heteroskedasticity erros
+# Homogenous regressors. 
+
+
+```{r}
+
+
+
+n <- c(30, 100, 300)
+T <- c(12, 30)
+beta <- c(0.5, 0.5)
+DGPs <- c("K1", "K2", "K3", "K4", "B1", "E1")
+
+# Create an empty list to store the results
+all_results_homo <- list()
+
+# Iterate over the combinations of T, n, and nsim
+for (T_val in T) {
+  for (n_val in n) {
+    # Determine the value of nsim based on the current n
+     nsim_val <- ifelse(n_val == 300, 50, 100)
+    
+    # Iterate over the DGP types
+    for (DGP_type in DGPs) {
+      # Run the doMonteCarlo function for the current combination
+      results <- doMonteCarlo(nsim_val, T_val, n_val, beta, DGP_type, endogenous = FALSE, error = "hetero", rho = 0.5)
+      
+      # Create a label for the current combination
+      label <- paste0("T", T_val, "_n", n_val, "_nsim", nsim_val, "_", DGP_type)
+      
+      # Store the results in the list with the label
+      all_results_homo[[label]] <- results
+    }
+  }
+}
+
+
+
+```
+
+## Autocorrelated errors
+# Homogeneous regressors
+
+
+```{r}
+
+n <- c(30, 100, 300)
+T <- c(12, 30)
+beta <- c(0.5, 0.5)
+rho <- seq(0, 1, by = 0.1)
+DGPs <- c("K1", "K2", "K3", "K4", "B1", "E1")
+
+# Create an empty list to store the results
+all_results_autocorr <- list()
+
+# Iterate over the combinations of T, n, and nsim
+for (T_val in T) {
+  for (n_val in n) {
+    # Determine the value of nsim based on the current n
+     nsim_val <- ifelse(n_val == 300, 50, 100)
+    
+    # Iterate over the DGP types
+    for (DGP_type in DGPs) {
+      for (i in length(rho)) {
+         results <- doMonteCarlo(nsim_val, T_val, n_val, beta, DGP_type, endogenous = FALSE, error = "autocorr", rho = rho[i] )
+      }
+      # Run the doMonteCarlo function for the current combination
+      # Create a label for the current combination
+      label <- paste0("T", T_val, "_n", n_val, "_nsim", nsim_val, "_", DGP_type, "_rho", i)
+      
+      # Store the results in the list with the label
+      all_results_autocorr[[label]] <- results
+    }
+  }
+}
+```
+
+# Produce Tables.
+
+
+

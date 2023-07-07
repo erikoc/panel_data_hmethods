@@ -187,7 +187,7 @@ T <- 12
 
 beta <- c(0.5,0.5)
 
-data <- DataGeneratingFunction(T, n, beta = beta, DGP = "B1" , endogenous = FALSE, error = "autocorr")
+data <- DataGeneratingFunction(T, n, beta = beta, DGP = "B1" , endogenous = FALSE, error = "autocorr", rho = 0.5)
 data_plm <- data[["plm"]]
 data_Tn <-  data[["Tn"]]
 
@@ -203,6 +203,8 @@ plot(summary(Eup.fit))
 plm_fit <- plm(data_plm$Y ~ data_plm$X_1 + data_plm$X_2 -1, data = data_plm,  model = "within")
 summary(plm_fit)
 ```
+
+8. `doMonteCarlo`
 ```{r}
 
 source("sim_dgp_fn.R")
@@ -213,9 +215,9 @@ T <- 12
 
 
 beta <- c(0.5,0.5)
-nsim <- 1000
+nsim <- 10
 
-timing <- system.time({results <- doMonteCarlo(nsim, T, n, beta, DGP = "K3")})
+timing <- system.time({results <- doMonteCarlo(nsim, T, n, beta, DGP = "K3", error = "homo")})
 print(timing)
 
 
