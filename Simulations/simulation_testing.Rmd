@@ -25,8 +25,8 @@ Setup
 
 ```{r}
 
-n <- 30
-T <- 12
+n <- 100
+T <- 30
 beta <- c(0.5,0.5)
 
 ```
@@ -39,11 +39,11 @@ beta <- c(0.5,0.5)
 
 X <- generate_X(T,n)
 stopifnot(dim(X) == c(T*n,2))
-X_shifted <- shift_mean(X)
+X_shifted <- shift_mean(X, T, n)
 stopifnot(dim(X_shifted) == c(T*n,2))
 
 
-X <- shift_mean(X)
+X <- shift_mean(X, T,n)
 
 group_size <- n*T/3
 
@@ -93,9 +93,9 @@ for (i in 1:length(V_list)) {
 
 ```{r}
 X <- generate_X(T, n)
-X <- shift_mean(X)
+X <- shift_mean(X, T, n)
 
-DGP = "K4"
+DGP = "K2"
   
 # Create individual effects according to specified DGP
   if (DGP == "K1") {
@@ -110,7 +110,11 @@ DGP = "K4"
   
   # Create endogenous regressors, when specified
 
-X <- endogenous_X(T, n, X, V)
+endogenous = TRUE
+
+if (endogenous) {
+    X <- endogenous_X(T, n, X, V)
+  }
 
 cor(X,V)
 
@@ -125,18 +129,18 @@ cor(X,V)
 
 e <- generate_panel_errors(T, n, X, error = "homo") 
 
-plot(X[,2], e, type = "p", xlab = "Observation", ylab = "Error", main = "Panel Errors")
+plot(e[1:T], type = "p", xlab = "Observation", ylab = "Error", main = "Panel Errors")
 
 # 2. Heteroskedastic 
 
 e <- generate_panel_errors(T, n, X, error = "hetero") 
 
-plot(X[,2], e, type = "p", xlab = "Observation", ylab = "Error", main = "Panel Errors")
+plot(e[1:T], type = "p", xlab = "Observation", ylab = "Error", main = "Panel Errors")
 
 
 # 2. Autocorrelated errors
 
-e <- generate_panel_errors(T, n, X, error = "autocorr", rho = 0.5) 
+e <- generate_panel_errors(T, n, X, error = "autocorr", rho = 0.8) 
 
 plot(e[1:T], type = "l", xlab = "Observation", ylab = "Error", main = "Panel Errors")
 ```
@@ -151,7 +155,7 @@ T <- 30
 
 
 X <- generate_X(T, n)
-X <- shift_mean(X)
+X <- shift_mean(X, T, n)
 
 DGP = "K4"
   
@@ -187,16 +191,16 @@ T <- 12
 
 beta <- c(0.5,0.5)
 
-data <- DataGeneratingFunction(T, n, beta = beta, DGP = "B1" , endogenous = FALSE, error = "autocorr", rho = 0.5)
+data <- DataGeneratingFunction(T, n, beta = beta, DGP = "K3" , endogenous = FALSE, error = "homo", rho = 0.5)
 data_plm <- data[["plm"]]
 data_Tn <-  data[["Tn"]]
 
-KSS.fit <- KSS(data_Tn$Y ~ data_Tn$X_1 + data_Tn$X_2 -1, CV = TRUE)
-summary(KSS.fit)
-plot(summary(KSS.fit))
+#KSS.fit <- KSS(data_Tn$Y ~ data_Tn$X_1 + data_Tn$X_2 -1, CV = TRUE, consult.dim.crit =  TRUE)
+#summary(KSS.fit)
+#plot(summary(KSS.fit))
 
 
-Eup.fit <- Eup(data_Tn$Y ~ data_Tn$X_1 + data_Tn$X_2 -1, dim.criterion = "PC3")
+Eup.fit <- Eup(data_Tn$Y ~ data_Tn$X_1 + data_Tn$X_2 -1, dim.criterion = "PC1")
 summary(Eup.fit)
 plot(summary(Eup.fit))
 
@@ -224,5 +228,8 @@ print(timing)
 
 ```
 
+```{r}
+
+```
 
 

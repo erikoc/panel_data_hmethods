@@ -5,6 +5,8 @@ date: "2023-07-07"
 output: html_document
 ---
 
+
+
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
@@ -17,6 +19,11 @@ source("sim_montecarlo_fn.R")
 source("sim_final_fn.R")
 ```
 
+```{r}
+set.seed(42)
+```
+
+
 
 # Benchmark scenarios
 
@@ -26,10 +33,41 @@ source("sim_final_fn.R")
 n <- c(30, 100, 300)
 T <- c(12, 30)
 beta <- c(0.5, 0.5)
-DGPs <- c("K1", "K2", "K3", "K4", "B1", "E1")
+DGPs <- c("K1", "K2", "K3", "K4", "E1")
 
 # Create an empty list to store the results
-all_results_bex <- list()
+all_results_bT <- list()
+
+# Iterate over the combinations of T, n, and nsim
+for (T_val in T) {
+  for (n_val in n) {
+    # Determine the value of nsim based on the current n
+     nsim_val <- ifelse(n_val == 300, 500, 1000)
+    
+    # Iterate over the DGP types
+    for (DGP_type in DGPs) {
+      # Run the doMonteCarlo function for the current combination
+      results <- doMonteCarlo(nsim_val, T_val, n_val, beta, DGP_type, endogenous = TRUE, error = "homo", rho = 0.5)
+      
+      # Create a label for the current combination
+      label <- paste0("T", T_val, "_n", n_val, "_nsim", nsim_val, "_", DGP_type)
+      
+      # Store the results in the list with the label
+      all_results_bT[[label]] <- results
+    }
+  }
+}
+```
+
+```{r}
+
+n <- c(30, 100, 300)
+T <- c(12, 30)
+beta <- c(0.5, 0.5)
+DGPs <- c("K1", "K2", "K3", "K4", "E1")
+
+# Create an empty list to store the results
+all_results_b <- list()
 
 # Iterate over the combinations of T, n, and nsim
 for (T_val in T) {
@@ -46,48 +84,14 @@ for (T_val in T) {
       label <- paste0("T", T_val, "_n", n_val, "_nsim", nsim_val, "_", DGP_type)
       
       # Store the results in the list with the label
-      all_results_bex[[label]] <- results
+      all_results_b[[label]] <- results
     }
   }
 }
-```
-## 2. Endogenous regressors, homoskedastic error terms 
-
-```{r}
-
-n <- c(30, 100, 300)
-T <- c(12, 30)
-beta <- c(0.5, 0.5)
-DGPs <- c("K1", "K2", "K3", "K4", "B1", "E1")
-
-# Create an empty list to store the results
-all_results_bhet <- list()
-
-# Iterate over the combinations of T, n, and nsim
-for (T_val in T) {
-  for (n_val in n) {
-    # Determine the value of nsim based on the current n
-     nsim_val <- ifelse(n_val == 300, 50, 100)
-    
-    # Iterate over the DGP types
-    for (DGP_type in DGPs) {
-      # Run the doMonteCarlo function for the current combination
-      results <- doMonteCarlo(nsim_val, T_val, n_val, beta, DGP_type, endogenous = TRUE, error = "homo", rho = 0.5)
-      
-      # Create a label for the current combination
-      label <- paste0("T", T_val, "_n", n_val, "_nsim", nsim_val, "_", DGP_type)
-      
-      # Store the results in the list with the label
-      all_results_bhet[[label]] <- results
-    }
-  }
-}
-```
-
-
 ## Heteroskedasticity erros
 # Homogenous regressors. 
 
+```
 
 ```{r}
 
@@ -96,27 +100,27 @@ for (T_val in T) {
 n <- c(30, 100, 300)
 T <- c(12, 30)
 beta <- c(0.5, 0.5)
-DGPs <- c("K1", "K2", "K3", "K4", "B1", "E1")
+DGPs <- c("K1", "K2", "K3", "K4", "E1")
 
 # Create an empty list to store the results
-all_results_homo <- list()
+all_results_hetero_time <- list()
 
 # Iterate over the combinations of T, n, and nsim
 for (T_val in T) {
   for (n_val in n) {
     # Determine the value of nsim based on the current n
-     nsim_val <- ifelse(n_val == 300, 50, 100)
+     nsim_val <- ifelse(n_val == 300, 500, 1000)
     
     # Iterate over the DGP types
     for (DGP_type in DGPs) {
       # Run the doMonteCarlo function for the current combination
-      results <- doMonteCarlo(nsim_val, T_val, n_val, beta, DGP_type, endogenous = FALSE, error = "hetero", rho = 0.5)
+      results <- doMonteCarlo(nsim_val, T_val, n_val, beta, DGP_type, endogenous = FALSE, error = "hetero_time", rho = 0.5, error.type = 4)
       
       # Create a label for the current combination
       label <- paste0("T", T_val, "_n", n_val, "_nsim", nsim_val, "_", DGP_type)
       
       # Store the results in the list with the label
-      all_results_homo[[label]] <- results
+      all_results_hetero_time[[label]] <- results
     }
   }
 }
@@ -125,8 +129,74 @@ for (T_val in T) {
 
 ```
 
+
+```{r}
+n <- c(30, 100, 300)
+T <- c(12, 30)
+beta <- c(0.5, 0.5)
+DGPs <- c("K1", "K2", "K3", "K4", "E1")
+
+# Create an empty list to store the results
+all_results_hetero_individual<- list()
+
+# Iterate over the combinations of T, n, and nsim
+for (T_val in T) {
+  for (n_val in n) {
+    # Determine the value of nsim based on the current n
+     nsim_val <- ifelse(n_val == 300, 500, 1000)
+    
+    # Iterate over the DGP types
+    for (DGP_type in DGPs) {
+      # Run the doMonteCarlo function for the current combination
+      results <- doMonteCarlo(nsim_val, T_val, n_val, beta, DGP_type, endogenous = FALSE, error = "hetero_individual", rho = 0.5, error.type = 4)
+      
+      # Create a label for the current combination
+      label <- paste0("T", T_val, "_n", n_val, "_nsim", nsim_val, "_", DGP_type)
+      
+      # Store the results in the list with the label
+      all_results_hetero_individual[[label]] <- results
+    }
+  }
+}
+
+```
+
+
+```{r}
+n <- c(30, 100, 300)
+T <- c(12, 30)
+beta <- c(0.5, 0.5)
+DGPs <- c("K1", "K2", "K3", "K4", "E1")
+
+# Create an empty list to store the results
+all_results_hetero_both <- list()
+
+# Iterate over the combinations of T, n, and nsim
+for (T_val in T) {
+  for (n_val in n) {
+    # Determine the value of nsim based on the current n
+     nsim_val <- ifelse(n_val == 300, 500, 1000)
+    
+    # Iterate over the DGP types
+    for (DGP_type in DGPs) {
+      # Run the doMonteCarlo function for the current combination
+      results <- doMonteCarlo(nsim_val, T_val, n_val, beta, DGP_type, endogenous = FALSE, error = "hetero_time", rho = 0.5, error.type = 2)
+      
+      # Create a label for the current combination
+      label <- paste0("T", T_val, "_n", n_val, "_nsim", nsim_val, "_", DGP_type)
+      
+      # Store the results in the list with the label
+      all_results_hetero_both[[label]] <- results
+    }
+  }
+}
+
+```
+
+n <- c(30, 100, 300)
+
 ## Autocorrelated errors
-# Homogeneous regressors
+# low correlation
 
 
 ```{r}
@@ -135,28 +205,65 @@ n <- c(30, 100, 300)
 T <- c(12, 30)
 beta <- c(0.5, 0.5)
 rho <- seq(0, 1, by = 0.1)
-DGPs <- c("K1", "K2", "K3", "K4", "B1", "E1")
+DGPs <- c("K1", "K2", "K3", "K4", "E1")
 
 # Create an empty list to store the results
-all_results_autocorr <- list()
+all_results_autocorr_low <- list()
 
 # Iterate over the combinations of T, n, and nsim
 for (T_val in T) {
   for (n_val in n) {
     # Determine the value of nsim based on the current n
-     nsim_val <- ifelse(n_val == 300, 50, 100)
+     nsim_val <- ifelse(n_val == 300, 500, 1000)
     
     # Iterate over the DGP types
     for (DGP_type in DGPs) {
       for (i in length(rho)) {
-         results <- doMonteCarlo(nsim_val, T_val, n_val, beta, DGP_type, endogenous = FALSE, error = "autocorr", rho = rho[i] )
+        rho <- runif(1, min = -0.3, max = 0.3)
+         results <- doMonteCarlo(nsim_val, T_val, n_val, beta, DGP_type, endogenous = FALSE, error = "autocorr", rho = rho, error.type = 5 )
       }
       # Run the doMonteCarlo function for the current combination
       # Create a label for the current combination
-      label <- paste0("T", T_val, "_n", n_val, "_nsim", nsim_val, "_", DGP_type, "_rho", i)
+      label <- paste0("T", T_val, "_n", n_val, "_nsim", nsim_val, "_", DGP_type)
       
       # Store the results in the list with the label
-      all_results_autocorr[[label]] <- results
+      all_results_autocorr_low[[label]] <- results
+    }
+  }
+}
+```
+
+
+# High correlation
+
+```{r}
+n <- c(30, 100, 300)
+T <- c(12, 30)
+beta <- c(0.5, 0.5)
+rho <- seq(0, 1, by = 0.1)
+DGPs <- c("K1", "K2", "K3", "K4", "E1")
+
+# Create an empty list to store the results
+all_results_autocorr_high <- list()
+
+# Iterate over the combinations of T, n, and nsim
+for (T_val in T) {
+  for (n_val in n) {
+    # Determine the value of nsim based on the current n
+     nsim_val <- ifelse(n_val == 300, 500, 1000)
+    
+    # Iterate over the DGP types
+    for (DGP_type in DGPs) {
+      for (i in length(rho)) {
+        rho <- runif(1, min = 0.6, max = 0.8)
+         results <- doMonteCarlo(nsim_val, T_val, n_val, beta, DGP_type, endogenous = FALSE, error = "autocorr", rho = rho, error.type = 5 )
+      }
+      # Run the doMonteCarlo function for the current combination
+      # Create a label for the current combination
+      label <- paste0("T", T_val, "_n", n_val, "_nsim", nsim_val, "_", DGP_type)
+      
+      # Store the results in the list with the label
+      all_results_autocorr_high[[label]] <- results
     }
   }
 }
@@ -164,5 +271,130 @@ for (T_val in T) {
 
 # Produce Tables.
 
+#1. Baseline scenario
 
+
+
+
+
+```{r}
+
+DGPs <- c("K1", "K2", "K3", "K4", "E1")
+
+
+for (DGP in DGPs){
+  all_means <- calculate_means_for_paths_and_estimators(all_results_b, DGP)
+  generate_combined_latex_table(all_means, "b", DGP)
+
+}
+
+```
+
+```{r}
+
+DGPs <- c("K1", "K2", "K3", "K4", "E1")
+
+
+for (DGP in DGPs){
+  all_means <- calculate_means_for_paths_and_estimators(all_results_bT, DGP)
+  generate_combined_latex_table(all_means, "bT", DGP)
+
+}
+
+```
+
+
+
+```{r}
+
+
+DGPs <- c("K1", "K2", "K3", "K4", "E1")
+
+
+for (DGP in DGPs){
+  all_means <- calculate_means_for_paths_and_estimators(all_results_hetero, DGP)
+  generate_combined_latex_table(all_means, "hetero", DGP)
+}
+
+```
+
+
+```{r}
+
+DGPs <-c("K1", "K2", "K3", "K4", "E1")
+
+
+for (DGP in DGPs){
+  all_means <- calculate_means_for_paths_and_estimators(all_results_autocorr_low, DGP)
+  generate_combined_latex_table(all_means, "autocorr_low", DGP)
+}
+```
+
+```{r}
+
+DGPs <-c("K1", "K2", "K3", "K4", "E1")
+
+
+for (DGP in DGPs){
+  all_means <- calculate_means_for_paths_and_estimators(all_results_autocorr_high, DGP)
+  generate_combined_latex_table(all_means, "autocorr_high", DGP)
+}
+
+```
+
+```{r}
+
+# Load required packages
+library(ggplot2)
+library(ggthemes)
+library(wesanderson)
+
+# Create a dataframe
+df <- data.frame(
+  x = seq_len(max(length(all_results_b$T30_n30_nsim1000_K3$KSS$used.dim), length(all_results_b$T30_n30_nsim1000_K3$Eup$used.dim))),
+  KSS = c(all_results_b$T30_n30_nsim1000_K3$KSS$used.dim, rep(NA, max(0, length(all_results_b$T30_n30_nsim1000_K3$Eup$used.dim) - length(all_results_b$T30_n30_nsim1000_K3$KSS$used.dim)))),
+  Eup = c(all_results_b$T30_n30_nsim1000_K3$Eup$used.dim, rep(NA, max(0, length(all_results_b$T30_n30_nsim1000_K3$KSS$used.dim) - length(all_results_b$T30_n30_nsim1000_K3$Eup$used.dim))))
+)
+
+# Melt the dataframe to long format
+library(reshape2)
+df_melt <- melt(df, id.vars = "x", variable.name = "Series", value.name = "Value")
+
+# Create a ggplot
+ggplot(df_melt, aes(x=Value, fill=Series)) +
+  geom_density(alpha=0.5) +
+  #wes_palette("FantasticFox1") +  # Use a Wes Anderson color theme
+  labs(title="Density Plot", x="Value", y="Density", fill="Series") +
+  scale_fill_manual(values=c("KSS"="#FC4E07", "Eup"="#E6A200"))  # Define your own colors for the series
+
+
+
+```
+
+```{r}
+# Load required packages
+library(ggplot2)
+library(ggridges)
+
+# Create a dataframe
+df <- data.frame(
+  x = seq_len(max(length(all_results_b$T30_n30_nsim1000_K3$KSS$used.dim), length(all_results_b$T30_n30_nsim1000_K3$Eup$used.dim))),
+  KSS = c(all_results_b$T30_n30_nsim1000_K3$KSS$used.dim, rep(NA, max(0, length(all_results_b$T30_n30_nsim1000_K3$Eup$used.dim) - length(all_results_b$T30_n30_nsim1000_K3$KSS$used.dim)))),
+  Eup = c(all_results_b$T30_n30_nsim1000_K3$Eup$used.dim, rep(NA, max(0, length(all_results_b$T30_n30_nsim1000_K3$KSS$used.dim) - length(all_results_b$T30_n30_nsim1000_K3$Eup$used.dim))))
+)
+
+# Melt the dataframe to long format
+library(reshape2)
+df_melt <- melt(df, id.vars = "x", variable.name = "Series", value.name = "Value")
+
+# Create a ggplot
+ggplot(df_melt, aes(x = Value, y = Series, fill = Series)) +
+  geom_density_ridges(alpha = 0.5, bandwidth = 0.2) +
+  geom_vline(aes(xintercept = 2), color = "blue", linetype = "dashed") +  # Add vertical line at the true value
+  labs(title = "Ridgeline Plot", x = "Value", y = "Series", fill = "Series") +
+  scale_fill_manual(values = c("KSS"="#FC4E07", "Eup"="#E6A200"))  # Define your own colors for the series
+
+
+
+```
 

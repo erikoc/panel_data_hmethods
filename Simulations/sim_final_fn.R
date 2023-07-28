@@ -1,13 +1,14 @@
 library(ggplot2)
 library(gridExtra)
 library(reshape2)
+library(purrr)
 
 calculate_means <- function(results, path, estimator) {
   b1_mean <- mean(results[[path]][[estimator]]$b1.bias)
   b2_mean <- mean(results[[path]][[estimator]]$b2.bias)
   sd1_mean <- mean(results[[path]][[estimator]]$sd1)
   sd2_mean <- mean(results[[path]][[estimator]]$sd2)
-  mse_mean <- mean(results[[path]][[estimator]]$mse)
+  mse_mean <- mean(results[[path]][[estimator]]$mse.coeff)
   
   if (estimator %in% c("KSS", "Eup")) {
     mse_effects_mean <- mean(results[[path]][[estimator]]$mse.effect)
@@ -162,9 +163,26 @@ generate_latex_mse_effects_table <- function(results_type, DGP) {
     }
   }
   
-  cat('\\hline\n')
+  #cat('\\hline\n')
   cat('\\end{tabular}', "\n")
 }
+
+generate_combined_latex_table <- function(all_means_list, scenario, DGP) {
+  
+  filename <- paste0("C:\\Users\\spammer\\Desktop\\M.Sc. in Economics\\So 2023\\panel_data_hmethods\\LaTeX\\Tables\\table",DGP, "_", scenario, ".tex")
+  
+  sink(filename)
+  
+  
+  generate_latex_mse_effects_table(all_means_list, DGP)
+  
+  generate_latex_table(all_means_list, DGP)
+  
+
+  sink()
+}
+
+
 
 
 create_plots <- function(results_type, DGP) {
@@ -175,31 +193,31 @@ create_plots <- function(results_type, DGP) {
   #' @param DGP Type of DGP.
   #'
   #' @return The matrix X representing the exogenous variables.
-
+  
   # Construct the data_combine dataframe dynamically based on DGP
   data_combine <- data.frame(
-    KSS_b_1 = results_type[[paste("T12_n30_nsim1000_", DGP, sep = "")]]$KSS$mse,
-    Eup_b_1 = results_type[[paste("T12_n30_nsim1000_", DGP, sep = "")]]$Eup$mse,
+    KSS_b_1 = results_type[[paste("T12_n30_nsim1000_", DGP, sep = "")]]$KSS$b1,
+    Eup_b_1 = results_type[[paste("T12_n30_nsim1000_", DGP, sep = "")]]$Eup$b1,
     #Within_b_1 = results_type[[paste("T12_n30_nsim1000_", DGP, sep = "")]]$Within$mse.coeff,
     
-    KSS_b_2 = results_type[[paste("T30_n30_nsim1000_", DGP, sep = "")]]$KSS$mse,
-    Eup_b_2 = results_type[[paste("T30_n30_nsim1000_", DGP, sep = "")]]$Eup$mse,
+    KSS_b_2 = results_type[[paste("T30_n30_nsim1000_", DGP, sep = "")]]$KSS$b1,
+    Eup_b_2 = results_type[[paste("T30_n30_nsim1000_", DGP, sep = "")]]$Eup$b1,
     #Within_b_2 = results_type[[paste("T30_n30_nsim1000_", DGP, sep = "")]]$Within$mse.coeff,
     
-    KSS_b_3 = results_type[[paste("T12_n100_nsim1000_", DGP, sep = "")]]$KSS$mse,
-    Eup_b_3 = results_type[[paste("T12_n100_nsim1000_", DGP, sep = "")]]$Eup$mse,
+    KSS_b_3 = results_type[[paste("T12_n100_nsim1000_", DGP, sep = "")]]$KSS$b1,
+    Eup_b_3 = results_type[[paste("T12_n100_nsim1000_", DGP, sep = "")]]$Eup$b1,
     #Within_b_3 = results_type[[paste("T12_n100_nsim1000_", DGP, sep = "")]]$Within$mse.coeff,
     
-    KSS_b_4 = results_type[[paste("T30_n100_nsim1000_", DGP, sep = "")]]$KSS$mse,
-    Eup_b_4 = results_type[[paste("T30_n100_nsim1000_", DGP, sep = "")]]$Eup$mse,
-   # Within_b_4 = results_type[[paste("T30_n100_nsim1000_", DGP, sep = "")]]$Within$mse.coeff,
+    KSS_b_4 = results_type[[paste("T30_n100_nsim1000_", DGP, sep = "")]]$KSS$b1,
+    Eup_b_4 = results_type[[paste("T30_n100_nsim1000_", DGP, sep = "")]]$Eup$b1,
+    # Within_b_4 = results_type[[paste("T30_n100_nsim1000_", DGP, sep = "")]]$Within$mse.coeff,
     
-    KSS_b_5 = results_type[[paste("T12_n300_nsim500_", DGP, sep = "")]]$KSS$mse,
-    Eup_b_5 = results_type[[paste("T12_n300_nsim500_", DGP, sep = "")]]$Eup$mse,
+    KSS_b_5 = results_type[[paste("T12_n300_nsim500_", DGP, sep = "")]]$KSS$b1,
+    Eup_b_5 = results_type[[paste("T12_n300_nsim500_", DGP, sep = "")]]$Eup$b1,
     #Within_b_5 = results_type[[paste("T12_n300_nsim500_", DGP, sep = "")]]$Within$mse.coeff,
     
-    KSS_b_6 = results_type[[paste("T30_n300_nsim500_", DGP, sep = "")]]$KSS$mse,
-    Eup_b_6 = results_type[[paste("T30_n300_nsim500_", DGP, sep = "")]]$Eup$mse
+    KSS_b_6 = results_type[[paste("T30_n300_nsim500_", DGP, sep = "")]]$KSS$b1,
+    Eup_b_6 = results_type[[paste("T30_n300_nsim500_", DGP, sep = "")]]$Eup$b1
     #Within_b_6 = results_type[[paste("T30_n300_nsim500_", DGP, sep = "")]]$Within$mse.coeff
   )
   
@@ -257,42 +275,45 @@ create_plots <- function(results_type, DGP) {
   plot1 <- ggplot(data_panel1, aes(x=variable, y=value, fill=variable)) + 
     geom_violin() + 
     geom_boxplot(width=0.1, color="grey") +
-    geom_hline(yintercept = 0, linetype = "dotted", color = "black") +
+    geom_hline(yintercept = 0.5, linetype = "dotted", color = "black") +
     labs(title="n30 T12")
   
   plot2 <- ggplot(data_panel2, aes(x=variable, y=value, fill=variable)) + 
     geom_violin() + 
     geom_boxplot(width=0.1, color="grey") +
-    geom_hline(yintercept = 0, linetype = "dotted", color = "black") +
+    geom_hline(yintercept = 0.5, linetype = "dotted", color = "black") +
     labs(title="n100 T12")
   
   plot3 <- ggplot(data_panel3, aes(x=variable, y=value, fill=variable)) + 
     geom_violin() + 
     geom_boxplot(width=0.1, color="grey") +
-    geom_hline(yintercept = 0, linetype = "dotted", color = "black") +
+    geom_hline(yintercept = 0.5, linetype = "dotted", color = "black") +
     labs(title="n30 T30")
   
   plot4 <- ggplot(data_panel4, aes(x=variable, y=value, fill=variable)) + 
     geom_violin() + 
     geom_boxplot(width=0.1, color="grey") +
-    geom_hline(yintercept = 0, linetype = "dotted", color = "black") +
+    geom_hline(yintercept = 0.5, linetype = "dotted", color = "black") +
     labs(title="n100 T30")
   
   # New plots for n = 300
   plot5 <- ggplot(data_panel5, aes(x=variable, y=value, fill=variable)) + 
     geom_violin() + 
     geom_boxplot(width=0.1, color="grey") +
-    geom_hline(yintercept = 0, linetype = "dotted", color = "black") +
+    geom_hline(yintercept = 0.5, linetype = "dotted", color = "black") +
     labs(title="n300 T12")
   
   plot6 <- ggplot(data_panel6, aes(x=variable, y=value, fill=variable)) + 
     geom_violin() + 
     geom_boxplot(width=0.1, color="grey") +
-    geom_hline(yintercept = 0, linetype = "dotted", color = "black") +
+    geom_hline(yintercept = 0.5, linetype = "dotted", color = "black") +
     labs(title="n300 T30")
   
   # Combine plots into 2x3 grid with a specified order
   grid.arrange(plot1, plot2, plot5, plot3, plot4, plot6, ncol=3)
 }
+
+
+
 
 

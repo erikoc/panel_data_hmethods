@@ -1,0 +1,485 @@
+\input{preamble.tex}
+
+\pagenumbering{gobble}
+\tableofcontents
+\clearpage
+
+\pagenumbering{arabic}
+\section{Introduction}
+
+Panel data models offer the ability to manage unobserved endogeneity and allow for broader forms of heterogeneity \citep{hansen2022econometrics}. 
+
+\citet{kneip2012new} propose estimating the time-varying individual effects nonparametrically. This is achieved through a two-stage procedure involving spline smoothing and principal component analysis. 
+
+\section{The Model}
+
+We assume balanced panel data with $n$ cross-sectional units and $T$ time periods. We aim to model the variation of an independent variable $y_{it}$ for  $i \in \{1, ..., n\}$ and $t \in \{1, ..., T\}$ in dependent explanatory variables $x_{it} \in \R^P$.  We consider the following panel data model:
+
+
+\begin{equation}\label{model1}
+    y_{it} = \sum_{j=1}^P x_{itj}\beta_j + \nu_{it} + \varepsilon_{it}
+\end{equation}
+
+Where $x_{itj}$ is the $jth$ element of the vector of independent variables, $\varepsilon_{it}$ are idiosyncratic errors, and $\nu_{it} \in \R $ are unobserved non-constant individual effects. Note that whenever $x_{it}$ includes an intercept, identifiability requires $v_{it}$ to be centred around zero. Otherwise, the non-constant individual effects are centred around the overall mean. 
+
+Our main goal is to estimate and analyze  $v_{it}$. However, the estimation of $\beta$ remains of interest to us. We assume that $\nu_{it}$ has a factor structure which can be parametrized in terms of $d$ common factors as follows:
+
+\begin{equation}\label{factors}
+ \nu_{i t}=\left\{\begin{array}{c}v_{i t}=\sum_{l=1}^d \lambda_{i l} f_{l t} \\ v_i(t)=\sum_{l=1}^d \lambda_{i l} f_l(t)\end{array}\right.
+\end{equation}
+
+
+Here $\lambda_{il}$ are the individual loading parameters, $f_{lt}$ are the common factors of the general model of \citet{bai2009panel},  and $f_{l}(t)$ are the common factors for the model of \citet{kneip2012new}. %The type of models represented by equations (\ref{model1}) and (\ref{factors}) are known as interactive fixed-effects models. 
+
+\citet{bai2009panel} treats both $\lambda_{il}$ and $f_{lt}$ as fixed-effects parameters to be jointly estimated with $\beta$. Heteroskedasticity and dependency across time and cross-sectional units are allowed. Further, $f_{lt}$ is modelled as an integrated or stationary process, which is allowed to have a non-zero mean.  Both the individual loading parameters and the common factors parameters are allowed to be correlated with the regressors $x_{it}$.
+
+In contrast,  \citet{kneip2012new} model the time-varying individual effects as linear combinations of a small number of unknown basis functions ($f_l(t))$, where the individual loading parameters set the weight of every basis function for each cross-sectional unit. This translates into smooth, slowly varying local trends. The author's setup consequently allows for strongly correlated stationary and non-stationary factors. %not clear. 
+
+This work will centre around the discussion of the model and estimation methods proposed by \citet{kneip2012new}, and its comparison to the general model synthesized by \citet{bai2009panel} and some of the estimation methods applicable to that setup. 
+
+\subsection{Interactive and additive fixed-effects}
+
+The specification in (\ref{model1})  includes the classic panel data models with additive fixed-effects model as a special case. Indeed, for $d=2$, a first common factor $f_{1t} = 1, \forall t$ with individual loading parameters $\lambda_{i1}$ and a second common factor of the form $f_{2t}$ with identical loading parameters $\lambda_{i2} = 1,  \forall i$ we get the classical two-way error component model:
+
+\begin{equation*}
+      y_{it} = \sum_{j=1}^\rho x_{itj}\beta_j + \lambda_{i1} + f_{2t} + \varepsilon_{it}
+\end{equation*}
+
+Nonetheless, unlike the case of classical additive effects panel models, well-known estimation methods, such as the within-transformation, are generally inadequate. To see this, consider the case where $d =1$, $ y_{it} = \sum_{j=1}^\rho x_{itj}\beta_j + \lambda_{i1}f_{1t} + \varepsilon_{it}$. Then, the within-transformation $ \dot{y}_{it}   =   y_{it} - \bar{y}_i = \sum_{j=1}^\rho (x_{it} - \bar{x}_i)\beta_j + \lambda_i(f_{1t} - \bar{f}) + \varepsilon_{it} - \bar{\varepsilon}_{i}$ is unable to eliminate the interactive effects since, generally, $f_{1t} \neq \bar{f}$. Hence, the within estimator is inconsistent for the model as the potential endogeneity between regressors and unobservables can't be addressed \citep{bai2009panel}. 
+
+It is worth noting that since interactive-effects models encompass additive-effects models as a specific case, a consistent estimator for the former will also be consistent for the latter, albeit less efficient than the classical estimator \citep{bai2009panel}. To prevent inefficiency, it is possible to enhance model (\ref{model1}) by explicitly incorporating the classical additive effects,
+
+\begin{equation}\label{explicit_model}
+    y_{it} = \sum_{j=1}^\rho x_{itj}\beta_j + \nu_{it} + \alpha_i + \xi_t + \varepsilon_{it},
+\end{equation}
+
+where $\alpha_i$ and $\xi_t$ denote the unit- and time-specific fixed effects. This specification also allows for further interpretability. Model (\ref{explicit_model}) can be estimated via augmented versions of the methods proposed by both \citet{bai2009panel} and \citet{kneip2012new}. This is discussed in detail \citet{bai2009panel} and \citet{bada2012phtt}.
+
+\subsection{Factor modelling in economics}
+
+Model (\ref{model1}) can fit a wide range of economic phenomena where unobservables might be present as common factors. A few examples might elucidate the usefulness of the approach discussed in this paper.  
+
+\paragraph{Macroeconomics} Let $y_{it}$ be the growth rate for a country $i$ in period $t$ and $x_{it}$ be a series of inputs, such as labour and capital. The factors $f_{lt}$ could represent common macroeconomic shocks such as technological change and financial crises, and the individual loading parameters $\lambda_{il}$ the heterogeneous impacts of such shocks to the countries' growth rates. 
+
+\paragraph{Microeconomics} Consider a setup where $y_{it}$ represents the wage for individual.
+
+\section{Identification}\label{identification}
+
+In the absence of any further constraints, the problem of the non-uniqueness of common factors leads to indeterminacy. This, and the ensuing normalizations, are easier understood when using matrix notation. Let $Y_i = (y_{i1}, \ldots, y_{iT})^\prime$, $X_i = (x_{i1}, \ldots, x_{iT})$, $F = (F_1,  \ldots, F_T)^\prime$,$ \lambda_i = (\lambda_{i 1}, \ldots, \lambda_{i d})^\prime$ and $\varepsilon_{i} = (\varepsilon_{i1}, \ldots, \varepsilon_{iT})^\prime$, with  $F_t = (f_1(t), \ldots, f_d(t))^\prime$. We then write the model as:
+
+\begin{equation}\label{matrix_notation}
+    Y_i=X_i \beta+ F\lambda_i^\prime +\varepsilon_i
+\end{equation}
+
+ 
+
+Now, since, for any invertible  $d \times d$ matrix $A$, it holds that $ F A A^{-1} \lambda_i^\prime  =  F \lambda_i^\prime$, the model, with factors $FA$ and loading parameters $\lambda_i (A^{-1})^\prime$ is also true. Hence, factors are only identifiable up to linear transformations of the form presented above. Sine matrix $A$ has $d \times d$ free elements, we require $d^2$ restrictions on the model for identifiability. 
+
+
+Consider $\Lambda = (\lambda_1, \ldots, \lambda_n)^\prime$. The usual normalizations are then given by:   
+
+\begin{enumerate}[label = (\alph*)]
+    \item $F^\prime F/T = I_d$ \label{cond_a}
+    \item $\Lambda^\prime \Lambda = \diag(\sum_{i=1}^n \lambda_{i1}^2, \ldots, \sum_{i=1}^n \lambda_{id}^2 ) $ \label{cond_b}
+\end{enumerate}
+
+
+
+Where the former yields $\frac{d(d+1)}{2}$ restrictions, and the latter provides the additional $\frac{d(d-1)}{2}$ restrictions. Conditions \ref{cond_a} and \ref{cond_b} ensure identifiability up to sign changes since, e.g. $-F$ and $-\lambda$ also satisfy these restrictions \citep{bai2009panel, kneip2012new}.
+
+The above normalizations lead to orthogonal vectors $F_t$ and empirically uncorrelated coefficients  $\lambda_{il}$. Further, under these restrictions, the problem of estimating factors $F_t$ becomes that of principal component analysis  \citep{kneip2012new}.
+
+
+\section{Estimation}
+
+\subsection{Method by \citet{kneip2012new}}
+The estimation approach developed by \citet{kneip2012new} involves a two-step procedure. First, estimates for the common slopes  $\hat{\beta}_j$ and initial estimates for the time-varying individual effects $\tilde{v}_i(t)$ are obtained via least squares, where a roughness penalty $\kappa$ controls the smoothness of the latter. This first step of the estimation relies on the use of an auxiliary function $\vartheta_i(t)$ defined on the interval $[1,T]$, so that 
+$\hat{\vartheta}_i(t) := \tilde{v}_i(t)$.
+
+Second, principal component analysis is used to estimate the common factors $f_l(t)$ and produce a final and more efficient estimate $\hat{v}_i(t)$ for the non-constant individual effects. 
+
+In what follows, each step will be discussed in detail. 
+
+\paragraph{Step 1:} For a given $\kappa >0 $, the unobserved paramters $\beta_j$ and $v_i(t)$ are estimated by the minimization of
+
+
+\begin{equation}\label{obj_kneip1}
+    \sum_{i=1}^n \frac{1}{T} \sum_{t=1}^T\left(y_{i t}-\sum_{j=1}^P x_{i t j} \beta_j-\vartheta_i(t)\right)^2+\sum_{i=1}^n \kappa \int_1^T \frac{1}{T}\left(\vartheta_i^{(m)}(s)\right)^2 d s
+\end{equation}
+
+over all $\beta_j \in \R$ and all functions $\vartheta_i(t)$ of class $C^m$, where $\vartheta^{(m)}_i(t)$ denotes the $m$th derivative of $\vartheta_i(t)$. Spline theory implies that any solution $\hat{\vartheta}_i(t)$ has an expansion in terms of a natural spline basis $z_1(t), \ldots, z_T(t)$ of order $2m$ such that $\hat{\vartheta}_i(t) = \sum_{s=1}^T \hat{\zeta}_{is} z_s(t)$. For a treatment of spline theory and spline smoothing see e.g. \citet{eubank1999nonparametric}, \citet{wasserman2006all}.
+
+Using the model in matrix notation (\ref{matrix_notation}) and the expansion of the time-varying individual effects, we can rewrite the objective function in  (\ref{obj_kneip1}) as:
+
+\begin{equation}\label{matrix_objective}
+    S(\beta, \zeta)=\sum_{i=1}^n\left(\left\|Y_i-X_i \beta-Z \zeta_i\right\|^2+\kappa \zeta_i^{\prime} R \zeta_i\right)
+\end{equation}
+
+here $\zeta_i = (\zeta_{i1}, \ldots, \zeta_{iT})^\prime$, $Z$ and $R$ are $T \times T$ matrices with elements $\{z_s(t)\}_{s,t = 1, \ldots, T}$ and $\{\int z_s^{(m)}(t)z_k^{(m)}(t), dt\}_{s,k=1, \ldots, T}$ respectively. Further, $\| \cdot\|$ denotes the eculidean norm in $\R^T$.   Estimators $\hat{\beta}, \hat{\zeta}_i$ and $\tilde{v}_i$ are hence obtained by minimizing (\ref{matrix_objective}) over all $\beta \in \R^\rho$ and $\zeta \in \R^{T \times n}$. With  $\mathcal{Z}_\kappa=Z\left(Z^{\prime} Z+\kappa R\right)^{-1} Z^{\prime}$, the solutions are given by: 
+
+\begin{equation}
+    \begin{aligned}
+& \hat{\beta}=\left(\sum_{i=1}^n X_i^{\prime}\left(I-\mathcal{Z}_\kappa\right) X_i\right)^{-1}\left(\sum_{i=1}^n X_i^{\prime}\left(I-\mathcal{Z}_\kappa\right) Y_i\right) \\
+& \hat{\zeta}_i=\left(Z^{\prime} Z+\kappa R\right)^{-1} Z^{\prime}\left(Y_i-X_i \hat{\beta}\right), \text { and } \\
+& \tilde{v}_i=\mathcal{Z}_\kappa\left(Y_i-X_i \hat{\beta}\right),
+\end{aligned}
+\end{equation}
+
+\paragraph{Step 2:}\label{step2} The common factors are obtained as the principal components of the sample $\tilde{v}_1, \ldots, \tilde{v}_n$. More precisely, let  
+
+\begin{equation}\label{empirical_covar}
+    \hat{\Sigma} = \frac{1}{n} \sum_{i=1}^n \tilde{v}_i \tilde{v}_i^\prime
+\end{equation}
+
+denote the empirical covariance matrix of $\tilde{v}_1, \ldots, \tilde{v}_n$. Let $\hat{\rho}_1 \geq,  \ldots, \geq \hat{\rho}_T$ and $\hat{\gamma}_1, \dots, \hat{\gamma}_T$ denote the eigenvalues and corresponding eigenvectors of (\ref{empirical_covar}). Then, the estimator of the common factor $f_l(t)$ is given by the $l$th scaled eigenvector
+
+\begin{equation}\label{hat_f}
+    \hat{f}_l(t) = \sqrt{T} \hat{\gamma}_{lt}, \, \text{for all} \, l = \{1, \ldots, d\}, t = \{t = 1, \ldots T\}
+\end{equation}
+
+where $\hat{\gamma}_{lt}$ is the $t$th element of the eigenvector $\hat{\gamma}_l$. The scaling factor $\sqrt{T}$ yields that (\ref{hat_f}) fullfils condition \ref{cond_a} in \Cref{identification}. The estimates $\hat{\lambda}_{il}$ for the individual loading paramters are obtianed via least squares of $(Y_i - X_i \hat{\beta})$ on $\hat{f}_l = (\hat{f}_l(1), \ldots, \hat{f}_l(T))^\prime$.
+
+A crucial part of the method proposed by \citet{kneip2012new} involves re-estimating the time-varying individual effects $v_i(t)$ in Step 2 by $\hat{v}_i(t) := \sum_{l=1}^d \hat{\lambda}_{il}  \hat{f}_l(t) $, where the factor dimension $d$ is determined by a  stuiable dimensionality criterion. 
+6
+\subsection{Method by \citet{bai2009panel}}
+\citet{bai2009panel} proposes to estimate parameters $\beta, F$ and $\lambda_i$ in model (\ref{matrix_notation}), given a known factor dimension $d$,  by minimizing the least squares objective function defined as:
+
+\begin{equation}
+    S\left(\beta, F, \lambda_i\right)=\sum_{i=1}^n\left\|Y_i-X_i \beta-F \lambda_i^{\prime}\right\|^2
+\end{equation}
+
+subject to conditions \ref{cond_a} and $\ref{cond_b}$ in \Cref{identification}. Given the projection matrix $\mathcal{P}_d = I_T - F(F^\prime F)^{-1}F^\prime = I_T - FF^\prime/T$, the least square estimator for $\beta$, given $F$ is given by:
+
+\begin{equation}
+    \hat{\beta}(F)=\left(\sum_{i=1}^n X_i^{\prime} \mathcal{P}_d X_i\right)^{-1}\left(\sum_{i=1}^n X_i^{\prime} \mathcal{P}_d Y_i\right)
+\end{equation}
+
+Now, given $\beta$, an estimator for $F$ is given, once again by the first $d$ eigenvectors $\hat{\gamma} = (\hat{\gamma}_1, \ldots, \hat{\gamma}_d)$  of the empirical covariance matrix $\hat{\Sigma} = (nT)^{-1}w_i w_i^\prime$, where $w_i = Y_i - X_i \beta$. More concretely:
+
+\begin{equation}
+    \hat{F}(\beta) = \sqrt{T}\hat{\gamma}
+\end{equation}
+
+The solution for $\hat{\beta}$ and $\hat{F}$ can then be obtained via iteration. Estimates for the individual loading parameters can then be obtained as follows:
+
+\begin{equation}
+    \hat{\lambda_i} = \frac{1}{T} \hat{F}^\prime (Y_i - X_i \hat{\beta}) 
+\end{equation}
+
+
+\citet{bada2014parameter} propose agumenting the method by \citet{bai2009panel} 
+
+
+
+\section{Asymptotics}
+
+\newtheorem{assumption}{Assumption}
+
+\begin{assumption}
+    For some fixed $d \in \{0,1,2,  \ldots\}, d < T$ there exists an $D$- dimensional subspace $\mathcal{D}_T$ of $\R^T$ such that $v_i \in \mathcal{D}_T$ holds with probability 1. 
+\end{assumption}
+
+\begin{assumption}
+    There exist a nondecreasing function $c(T)$ of $T$ such that for all $l,k = 1, \ldots, d, l \neq k$:
+        \begin{enumerate}
+            \item $E( \frac{1}{T} \sum_{t=1}^T v_i(t)^2) = O(c(T))$,
+            \item $\frac{1}{n} \sum_{i=1}^n \lambda_{il}^2 = O_P(c(T))$
+            \item $c(T) = 0_P (\sum_{i=1}^n \lambda_{il}^2)$
+            \item $\sum_{i=1}^n \lambda_{il}^2 = O_P(c(T)^2)$
+            \item $c(T) = O_P( |\sum_{i=1}^n \lambda_{il}^2 - \sum_{i=k}^n \lambda_{il}^2|) $
+            
+        \end{enumerate}
+    \end{assumption}
+
+    \begin{assumption}
+        There exists a nonincreasing function $b(T)$ sucht that as $n, T \to \infty$, the second-order differences of $v_i(t)$ satisfy:
+
+        $$ E \left( \frac{1}{T} \sum_{t=2}^{T-1} v_i(t-1) - 2v_i(t) + v_i(t+1)^2 \right) = O(b(T))$$
+    \end{assumption}
+
+    \begin{assumption}
+        There exists a nondecreasing function $d(T) \leq c(T)$ with $d(T) = o(T)$ such that $n, T \to \infty E(\frac{1}{T} \sum x_{itj}^2 = O(d(T))$ holds for all $j = 1, \ldots, \rho$. Furthermore, there is a constant $C_0 < \infty$ such that for all $\kappa \geq 1$:
+
+        $$ E \left( \kappa_{\max} \left( \left[ \sum_{i=1}^n ( X_i ^\prime (I - \mathcal{Z}_k) X_i \right]^{-1} \right) \right) \leq C_0 \frac{1}{nT} $$
+    \end{assumption}
+
+    \begin{assumption}
+        The error terms $\varepsilon_{it}$ are i.i.d with $E(\varepsilon_{it}) = 0, \operatorname{Var}(\varepsilon_{it}) = \sigma ^2 > 0$, and $E(\varepsilon_{it}^4) < \infty$. Moreover $\varepsilon_{it}$ is independent form $v_i(s)$ and $x_{isj}$ for all $t,s,j$.
+    \end{assumption}
+
+
+
+\newtheorem{theorem}{Theorem}
+
+\begin{theorem}
+Under the above assumptions, it holds that as $n, T \to \infty$:
+
+\begin{enumerate}
+    \item 
+\end{enumerate}
+\end{theorem}
+\section{Finite Sample Properties via Simulations}
+
+The finite sample properties of the estimators presended above are studied via Monte Carlo simulations. In addition to the KSS and Eup methods, we also consider the classical time-invariant fixed effects estimator. The setup of the simulation study is taken form \citet{kneip2012new}.
+
+The panel-data model is given by.
+
+\begin{equation}\label{sim_model}
+y_{i t}= \sum_{j =1}^P x_{itj} \beta_j + v_i(t)+\varepsilon_{i t} \quad i=1, \ldots, n ; \quad t=1, \ldots, T
+\end{equation}
+
+we and simulate samlpes of size $n=30,100,300$ with $T = 12,30$ in a model with $P = 2$ regressors. The slope parameters' true values given by $\beta_1=\beta_2=0.5$. The regressors $X_{it} = (x_{it1}, x_{it2})^\prime$ are generated acording to a bivariate vetor autoregression model:
+\begin{equation}\label{sim_x}
+X_{i t}=R X_{i, t-1}+\eta_{i t} \quad \text { with } \quad R=\left(\begin{array}{cc}
+0.4 & 0.05 \\
+0.05 & 0.4
+\end{array}\right) \quad \text { and } \quad \eta_{i t} \sim N\left(0, I_2\right)
+\end{equation}
+
+To intitalize the simulation, we set $X_{i1} \sim N(0, (I_2 - R^2)^{-1})$ and generate the rest of the sample according to (\ref{sim_x}). Thereafter, the $n$ regressor-series $\left(x_{1 i 1}, x_{2 i 1}\right)^{\prime}, \ldots,\left(x_{1 i T}, x_{2 i T}\right)^{\prime}$ are additionally shifted such that there are three different mean-value-clusters, fixed at $ \mu_1=(5,5)^{\prime}, \mu_2=(7.5,7.5)^{\prime} \text {, and } \mu_3=(10,10)^{\prime}$. This is to get a reasonable cloud of points for the regressors \citep{kneip2012new}.
+
+We generate time-varying individual effects following five different data generating processes:
+\begin{enumerate}
+\item[$\text{DGP}1$:] $v_i(t)=\theta_{i0}+\theta_{i1}\frac{t}{T}+\theta_{i2}\left(\frac{t}{T}\right)^2$,
+\item[$\text{DGP}2$:] $v_i(t)=\phi_i r_t$,
+\item[$\text{DGP}3$:] $v_i(t)=v_{i1} \sin (\pi t / 4) +v_{i2} \cos (\pi t / 4)$,
+\item[$\text{DGP}4$:] $v_i(t)=\xi_i$,
+\item[$\text{DGP}5$:] $v_i(t) = v_{i1} e^{-\frac{t}{4}}  \sin (\pi t / 4)$
+\end{enumerate}
+
+where $\theta_{i j}(j=0,1,2) \sim \: \text{i.i.d.} \: 5N(0,1),\xi_i, v_{i j}(j=1,2) \sim \: \text{i.i.d.} \: 3N(0,1)$, and $r_{t+1} = r_t + \delta_t$, with $\delta_t, r_1 \sim \: \text{i.i.d.} \: 3N(0,1)$. 
+
+The second regressor $x_{it2}$ is allowed to be endogenous with a correlation with $v_i(t)$ of $\rho = 0.5$. Let $w_{it}$ be the endogenous part of the regressor, so that $w_{it} = \rho v_i(t) + \sigma_v \sqrt{1-\rho^2}\epsilon_{it}$\footnote{In generating $w_{i t}$, the effects $v_i(t)$ is multiplied by 10 to balance with the magnitude of $x_{i t2}$.}, where $\sigma_v$ is the standard deviation of $v_i(t)$ and $\epsilon_{i t} \sim N(0,1)$. We then define the endogenous regressor as $\tilde{x}_{it2} = x_{it2} + w_{it}$.
+
+
+
+\subsection{Baseline scenario}
+
+
+\begin{table}[]
+\caption{DGP 1, homoskedastic errors}
+    \centering
+ \input{Tables/tableK1_b.tex}
+\end{table}
+    
+\begin{table}[]
+\caption{DGP 2, homoskedastic errors}
+    \centering
+ \input{Tables/tableK2_b.tex}
+\end{table}
+
+
+\begin{table}[]
+\caption{DGP 3, homoskedastic errors}
+    \centering
+ \input{Tables/tableK3_b.tex}
+\end{table}
+
+
+\begin{table}[]
+\caption{DGP 4, homoskedastic errors}
+    \centering
+ \input{Tables/tableK4_b.tex}
+\end{table}
+
+
+\begin{table}[]
+\caption{DGP 5, homoskedastic errors}
+    \centering
+ \input{Tables/tableE1_b.tex}
+\end{table}
+
+\subsection{Heteroskedastic error terms}
+
+
+\begin{table}[]
+\caption{DGP 1, heteroskedastic errors}
+    \centering
+ \input{Tables/tableK1_hetero.tex}
+\end{table}
+    
+\begin{table}[]
+\caption{DGP 2, heteroskedastic errors}
+    \centering
+ \input{Tables/tableK2_hetero.tex}
+\end{table}
+
+
+\begin{table}[]
+\caption{DGP 3, heteroskedastic errors}
+    \centering
+ \input{Tables/tableK3_hetero.tex}
+\end{table}
+
+
+\begin{table}[]
+\caption{DGP 4,heteroskedastic errors}
+    \centering
+ \input{Tables/tableK4_hetero.tex}
+\end{table}
+
+
+\begin{table}[]
+\caption{DGP 5, heteroskedastic errors}
+    \centering
+ \input{Tables/tableE1_hetero.tex}
+\end{table}
+
+\subsection{Weakly autocrorrelated error terms}
+
+
+\begin{table}[]
+\caption{DGP 1, weakly autocorrelated errors}
+    \centering
+ \input{Tables/tableK1_autocorr_low.tex}
+\end{table}
+    
+\begin{table}[]
+\caption{DGP 2, weakly autocorrelated errors}
+    \centering
+ \input{Tables/tableK2_autocorr_low.tex}
+\end{table}
+
+
+\begin{table}[]
+\caption{DGP 3, weakly autocorrelated errors}
+    \centering
+ \input{Tables/tableK3_autocorr_low.tex}
+\end{table}
+
+
+\begin{table}[]
+\caption{DGP 4,  weakly autocorrelated errors}
+    \centering
+ \input{Tables/tableK4_autocorr_low.tex}
+\end{table}
+
+
+\begin{table}[]
+\caption{DGP 5,  weakly autocorrelated errors}
+    \centering
+ \input{Tables/tableE1_autocorr_low.tex}
+\end{table}
+
+
+\subsection(Strongly autocrorrelated error terms}
+
+
+\begin{table}[]
+\caption{DGP 1, strongly autocorrelated errors}
+    \centering
+ \input{Tables/tableK1_autocorr_high.tex}
+\end{table}
+    
+\begin{table}[]
+\caption{DGP 2, strongly autocorrelated errors}
+    \centering
+ \input{Tables/tableK2_autocorr_high.tex}
+\end{table}
+
+
+\begin{table}[]
+\caption{DGP 3, strongly autocorrelated errors}
+    \centering
+ \input{Tables/tableK3_autocorr_high.tex}
+\end{table}
+
+
+\begin{table}[]
+\caption{DGP 4,  strongly autocorrelated errors}
+    \centering
+ \input{Tables/tableK4_autocorr_high.tex}
+\end{table}
+
+
+\begin{table}[]
+\caption{DGP 5,  strongly autocorrelated errors}
+    \centering
+ \input{Tables/tableE1_autocorr_high.tex}
+\end{table}
+
+
+\section{Application}
+
+\documentclass{article}
+\usepackage{booktabs}
+
+\begin{document}
+
+\begin{table}[ht]
+\centering
+\caption{Testing the Presence of Interactive Effects - Test of Kneip, Sickles, and Song (2012)}
+\label{tab:interactive_effects}
+\begin{tabular}{lcccc}
+\toprule
+Test-Statistic & p-value & crit.-value & sig.-level \\
+\midrule
+38.49 & 0.00 & 2.33 & 0.01 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[ht]
+\centering
+\caption{Slope-Coefficients}
+\label{tab:slope_coefficients}
+\begin{tabular}{lcccccc}
+\toprule
+ & Estimate & Std.Err & Z value & Pr(>z) \\
+\midrule
+dem & -0.000210 & 0.000259 & -0.81 & 0.418 \\
+lag(l.d.gdp.a, 1) & 0.268000 & 0.022200 & 12.00 & $<$2e-16 *** \\
+lag(l.d.gdp.a, 2) & 0.021100 & 0.022700 & 0.93 & 0.352 \\
+lag(l.d.gdp.a, 3) & -0.019400 & 0.022200 & -0.87 & 0.384 \\
+lag(l.d.gdp.a, 4) & 0.021600 & 0.020800 & 1.04 & 0.300 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{Call:}
+
+\texttt{Eup.default(formula = l.d.gdp.a \textasciitilde\ dem + lag(l.d.gdp.a, 1) + lag(l.d.gdp.a, 2) + lag(l.d.gdp.a, 3) + lag(l.d.gdp.a, 4) - 1,}\\
+\texttt{additive.effects = "twoways", dim.criterion = "PC3", error.type = 5)}
+
+\textbf{Residuals:}
+
+\begin{tabular}{lllll}
+Min & 1Q & Median & 3Q & Max \\
+-0.025100 & -0.001840 & 0.000138 & 0.002140 & 0.019000 \\
+\end{tabular}
+
+\textbf{Additive Effects Type:} twoways
+
+\textbf{Dimension of the Unobserved Factors:} 7
+
+\textbf{Residual standard error:} 0.004821 on 2325 degrees of freedom, \textbf{R-squared:} 0.7418
+
+\end{document}
+
+
+
+\begin{table}[ht]
+\centering
+\caption{Bootstrap results} 
+\begin{tabular}{rrr}
+  \hline 
+ & lower\_bound\_95 & upper\_bound\_95 \\ 
+  \hline 
+dem & -0.61 & -0.24 \\ 
+  inv & 1.17 & 3.32 \\ 
+  l.capital & -0.27 & 0.28 \\ 
+  tfp & -0.28 & 0.44 \\ 
+  gvt & -7.11 & -0.99 \\ 
+  gvt2 & -8.48 & 5.04 \\ 
+  hc & 0.84 & 1.23 \\ 
+  lifeexp & 0.07 & 0.09 \\ 
+  trade & -2.90 & -2.02 \\ 
+   \hline 
+\end{tabular}
+\end{table}
+
+
+\bibliography{bibliograpy.bib}
+
+
+\end{document} 

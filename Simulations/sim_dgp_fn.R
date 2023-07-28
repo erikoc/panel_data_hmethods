@@ -24,8 +24,8 @@ generate_X <- function(T, n) {
     X_i[1, ] <- rmvnorm(1, mean = rep(0, nrow(covariance_matrix)), sigma = covariance_matrix)
     
     for (t in 2:T) {
-      nu_i <- rmvnorm(T, mean = rep(0, nrow(covariance_matrix)), sigma = diag(2))
-      X_i[t, ] <- X_i[t - 1, ] %*% R + nu_i[t, ]
+      nu_i <- rmvnorm(1, mean = rep(0, nrow(covariance_matrix)), sigma = diag(2))
+      X_i[t, ] <- X_i[t - 1, ] %*% R + nu_i
     }
     X_list[[i]] <- X_i
   }
@@ -35,41 +35,41 @@ generate_X <- function(T, n) {
   return(X)
 }
 
-shift_mean <- function(X) {
-  #' Shifts the mean of each group in the input matrix
-  #'
-  #' This function shifts the mean of each group in the input matrix to predefined target means.
-  #'
-  #' @param X The input matrix of dimension (n, T), where n is the number of samples and T is the number of features.
-  #'
-  #' @return The shifted matrix with the mean of each group adjusted to the target means.
 
-  u_list <- list(
-    c(5, 5),
-    c(7.5, 7.5),
-    c(10, 10)
-  )
-  
-  group_size <- n*T / 3
-  
-  group_indices <- rep(1:3, each = group_size)
-  
-  X_grouped <- lapply(1:3, function(i) X[group_indices == i, , drop = FALSE])
-  
-  for (i in 1:3) {
-    mean_diff <- u_list[[i]] - colMeans(X_grouped[[i]])
-    if (any(mean_diff != 0)) {
-      X_grouped[[i]] <- X_grouped[[i]] + mean_diff
+  shift_mean <- function(X, T, n) {
+    #' Shifts the mean of each group in the input matrix
+    #'
+    #' This function shifts the mean of each group in the input matrix to predefined target means.
+    #'
+    #' @param X The input matrix of dimension (n*T, 2), where n is the number of individuals and T is the number of time periods.
+    #'
+    #' @return The shifted matrix with the mean of each group adjusted to the target means.
+    
+    u_list <- list(
+      c(5, 5),
+      c(7.5, 7.5),
+      c(10, 10)
+    )
+    
+    group_size <- n / 3
+    
+    group_indices <- rep(1:3, each = group_size * T)
+    
+    X_grouped <- lapply(1:3, function(i) X[group_indices == i, , drop = FALSE])
+    
+    for (i in 1:3) {
+      mean_diff <- u_list[[i]] - colMeans(X_grouped[[i]])
+      if (any(mean_diff != 0)) {
+        X_grouped[[i]] <- X_grouped[[i]] + matrix(rep(mean_diff, each = nrow(X_grouped[[i]])), ncol = 2, byrow = TRUE)
+      }
     }
+    
+    X_shifted <- do.call(rbind, X_grouped)
+    
+    return(X_shifted)
   }
   
-  X_shifted <- do.call(rbind, X_grouped)
   
-  
-  return(X_shifted)
-}
-
-
 generate_V1 <- function(T, n) {
   #' Generates the individual effects V using DGP K1
   #'
@@ -81,9 +81,9 @@ generate_V1 <- function(T, n) {
   #' @return The matrix V representing the individual effects.
   
 
-  theta_0 <- rnorm(n, mean = 0, sd = 1) * 3
-  theta_1 <- rnorm(n, mean = 0, sd = 1) * 3
-  theta_2 <- rnorm(n, mean = 0, sd = 1) * 3
+  theta_0 <- rnorm(n, mean = 0, sd = 1) * 5
+  theta_1 <- rnorm(n, mean = 0, sd = 1) * 5
+  theta_2 <- rnorm(n, mean = 0, sd = 1) * 5
   
   v_list <- vector("list", n)
   
@@ -217,45 +217,34 @@ generate_V5 <- function(T,n){
 }
 
 
-generate_V6 <- function(T, n, mu = 0.5, sigma = 3) {
-  #' Generates the individual effects V using DGP E2 incorporating Brownian motion with drift
+generate_V6 <- function(T, n, d = 0.25) {
+  #' Generates the individual effects V using a damped sine wave
   #'
-  #' This function generates the individual effects V for a panel data model using Brownian motion with drift.
+  #' This function generates the individual effects V for a panel data model using a damped sine wave.
   #'
   #' @param T The number of time periods.
   #' @param n The number of individuals.
-  #' @param mu The drift term.
-  #' @param sigma The volatility term.
+  #' @param d The damping factor. Larger values will cause the peaks to decrease more quickly.
   #'
   #' @return The matrix V representing the individual effects.
   
-  # Creating common time factor (Brownian motion with drift)
-  r <- rep(NA, T)
-  r[1] <- rnorm(1, mean = 0, sd = 1) * sigma + mu
+  v_1 <- rnorm(n, mean = 0, sd = 1) * 3
   
-  for (t in 2:T) {
-    r[t] <- r[t - 1] + rnorm(1, mean = 0, sd = 1) * sigma + mu
-  }
-  
-  # Creating individual loading parameters
-  phi <- rnorm(n, mean = 0, sd = 1) * 3
-  
-  # Generating time-invariant error terms
   v_list <- vector("list", n)
   
   for (i in 1:n) {
     v_i <- matrix(NA, nrow = T, ncol = 1)
     for (t in 1:T) {
-      v_i[t] <- phi[i] * r[t]
+      v_i[t] <- exp(-d * t) * (v_1[i] * sin(pi * t / 4))
     }
     v_list[[i]] <- v_i
   }
   
-  # Combining the individual effects into a matrix
   V <- do.call(rbind, v_list)
   
   return(V)
 }
+
 
 
 
@@ -277,8 +266,8 @@ endogenous_X <- function(T, n, X, V, rho = 0.5) {
   eps <- rnorm(n * T, mean = 0, sd = 1)
   
   # Calculate W
-  V <- V
-  W <- rho * V + sd(V) * sqrt(1 - rho^2) * eps
+  V <- V*10
+  W <- rho * V+ sd(V) * sqrt(1 - rho^2) * eps
   
   # Update X$X_2 by adding W
   X[,2] <- X[,2] + W
@@ -296,28 +285,53 @@ generate_panel_errors <- function(T, n, X, error = "homo", rho = 0.5) {
   #' @param T The number of time periods.
   #' @param n The number of individuals.
   #' @param X The matrix representing the exogenous variables X.
-  #' @param error The type of panel errors to generate. Supported values are "homo", "hetero", and "autocorr".
+  #' @param error The type of panel errors to generate. Supported values are "homo", "hetero_time", "hetero_individual", "hetero_both" and "autocorr".
   #' @param rho The correlation coefficient for the autocorrelated errors.
   #'
   #' @return The vector of panel errors.
-
+  
   if (error == "homo") {
-    e <- matrix(rnorm(n * T), nrow = n, ncol = T)
-  } else if (error == "hetero") {
-    sigma <- sqrt(1 + X[,1]^2 + X[,2]^2)
-    e <- matrix(rnorm(n * T, mean = 0, sd = sigma), nrow = T, ncol = n)
+    e <- rnorm(n * T)
+  } else if (error == "hetero_time") {
+    e <- numeric(n * T) 
+    for (i in 1:n) {
+      for (t in 1:T) {
+        sigma <- sqrt(1 + t)  # variance increasing over time
+        e[(i-1)*T + t] <- rnorm(1, mean = 0, sd = sigma)
+      }
+    }
+  } else if (error == "hetero_individual") {
+    e <- numeric(n * T) 
+    for (i in 1:n) {
+      sigma_i <- sqrt(1 + i)  # variance increasing with individual
+      for (t in 1:T) {
+        e[(i-1)*T + t] <- rnorm(1, mean = 0, sd = sigma_i)
+      }
+    }
+  } else if (error == "hetero_both") {
+    e <- numeric(n * T) 
+    for (i in 1:n) {
+      for (t in 1:T) {
+        sigma <- sqrt(1 + t + i)  # variance increasing with time and individual
+        e[(i-1)*T + t] <- rnorm(1, mean = 0, sd = sigma)
+      }
+    }
   } else if (error == "autocorr") {
-    e <- matrix(rnorm(n * T), nrow = T, ncol = n)
+    e <- rnorm(n * T)
     for (i in 1:n) {
       for (t in 2:T) {
-        e[t, i] <- rho * e[t-1, i] + sqrt(1 - rho^2) * e[t, i]
+        e[(i-1)*T + t] <- rho * e[(i-1)*T + t-1] + sqrt(1 - rho^2) * e[(i-1)*T + t]
       }
     }
   } else {
-    stop("Invalid error type. Supported values are 'homo', 'hetero', and 'autocorr'.")
+    stop("Invalid error type. Supported values are 'homo', 'hetero_time', 'hetero_individual', 'hetero_both', and 'autocorr'.")
   }
-  return(as.vector(e))
+  
+  return(e)
 }
+
+
+
 
 
 create_plm_data <- function(T, n, Y, X, V){
@@ -344,14 +358,12 @@ create_Tn_mat <- function(T, n, Y, X, V) {
   #'
   #' @return A list containing Tn matrices for Y, X_1, X_2, and V.
   Y_model <- matrix(Y, T, n)
-  X_1 <- X[, 1]
-  X_2 <- X[, 2]
-  X_1_model <- matrix(X_1, T, n)
-  X_2_model <- matrix(X_2, T, n)
+  X1_model <- matrix(X[,1], T, n)
+  X2_model <- matrix(X[,2], T, n)
   V_model <- matrix(V, T, n)
   
   
-  list <- list(Y = Y_model, X_1 = X_1_model, X_2 = X_2_model, V = V_model)
+  list <- list(Y = Y_model, X_1 = X1_model, X_2 = X2_model, V = V_model)
   
   return(list)
 }
@@ -375,7 +387,7 @@ DataGeneratingFunction <- function(T, n, beta, DGP, endogenous = FALSE, error = 
 
 
   X <- generate_X(T, n)
-  X <- shift_mean(X)
+  X <- shift_mean(X, T, n)
   
   # Create individual effects according to specified DGP
   if (DGP == "K1") {
