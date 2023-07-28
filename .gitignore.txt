@@ -21,29 +21,3 @@
 # Ignore generated PDF files
 *.pdf
 
-# R files to ignore
-
-# Ignore R data files
-*.RData
-*.Rhistory
-*.Rapp.history
-
-# Ignore local R configuration files
-.Rprofile
-.Rproj.user/
-.Rproj
-.Rbuildignore
-
-# Ignore R markdown cache files
-*_cache/
-
-# Ignore packrat files
-/packrat/
-.packrat/
-
-# Ignore shiny application shared data
-/rsconnect/
-
-# Ignore renv library and lock files
-/renv/library
-renv.lock
