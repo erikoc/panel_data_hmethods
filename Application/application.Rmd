@@ -1,0 +1,444 @@
+---
+title: "Application"
+author: "Erik Ortiz Covarrubias"
+date: "2023-07-16"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+```
+
+
+```{r}
+library(foreign)
+library(xtable)
+library(plm)
+library(gmm)
+library(readstata13)
+library(lattice)
+library(phtt)
+library(tidyverse)
+library(zoo)
+library(pwt10)
+library(WDI)
+library(TOSTER)
+```
+
+
+```{r}
+set.seed(42)
+```
+
+```{r}
+acemoglu_dta <- read.dta13(".\\acemoglu_democracy.dta")
+
+```
+
+```{r}
+
+threshold_year <- 1960
+
+variables <- c("y", "dem")
+
+complete_wbcode <- acemoglu_dta %>%
+  filter(year >= threshold_year) %>%
+  group_by(wbcode) %>%
+  filter(all(complete.cases(across(variables)))) %>%
+  pull(wbcode) %>%
+  unique()
+
+
+acemoglu_complete_dta <- acemoglu_dta %>%
+  filter(wbcode %in% complete_wbcode) %>%
+  filter(year >= threshold_year)
+
+
+
+n <- as.numeric(length(unique(acemoglu_complete_dta$wbcode)))
+T <- as.numeric(length(unique(acemoglu_complete_dta$year)))
+
+
+l.d.gdp.a <- diff(log(matrix(acemoglu_complete_dta$y, T, n)))
+dem <- matrix(acemoglu_complete_dta$dem[-1], T-1, n)
+
+```
+
+```{r}
+
+Eup.fit <- Eup(l.d.gdp.a ~ dem + lag(l.d.gdp.a, 1) + lag(l.d.gdp.a, 2) + lag(l.d.gdp.a, 3) + lag(l.d.gdp.a, 4) - 1,
+                 additive.effects = "twoways", dim.criterion = "PC1")
+
+OptDim(Eup.fit)
+
+checkSpecif(Eup.fit, level = 0.01)
+
+
+Eup.sum8 <-summary(Eup.fit, error.type = 8)
+print(Eup.sum8)
+plot(Eup.sum8)
+
+
+Eup.sum5 <-summary(Eup.fit, error.type = 5)
+print(Eup.sum5)
+plot(Eup.sum5)
+
+
+
+```
+
+
+
+```{r}
+
+library(boot)
+
+# Define a wrapper function for Eup
+eupWrapper <- function(data, indices) {
+  d <- data[indices, ]
+  
+  l.d.gdp.a <- diff(log(matrix(d$y, T, n)))
+  dem <- matrix(d$dem[-1], T -1, n)
+  
+  Eup.fit <- Eup(l.d.gdp.a ~ dem + lag(l.d.gdp.a, 1) + lag(l.d.gdp.a, 2) + lag(l.d.gdp.a, 3) + lag(l.d.gdp.a, 4) - 1,
+                 additive.effects = "twoways", dim.criterion = "PC1")
+  
+  Eup.fit.sum <- summary(Eup.fit, error.type = 8)
+  
+  return(Eup.fit.sum$coefficients[,1])  # Return the coefficients of the Eup model
+}
+
+# Run bootstrap using boot function
+boot_results_Eup <- boot(acemoglu_complete_dta, eupWrapper, R = 1000)
+
+```
+
+```{r}
+
+boot_results_Eup
+plot(boot_results_Eup)
+
+boot_cis <- lapply(1:5, function(i) boot.ci(boot.out = boot_results_Eup, index = i, type = "perc"))
+
+boot_cis
+```
+
+
+# DATA
+
+```{r}
+
+to_keep_acemoglu <- c("wbcode", "dem", "year")
+democracy_acemoglu <- select(acemoglu_dta, all_of(to_keep_acemoglu))
+
+
+```
+
+
+```{r}
+wdi <- WDI(indicator= "SP.DYN.LE00.IN", country= "all", start=1960, end=2012)
+
+wdi <- wdi %>%
+  rename(wbcode = iso3c, lifeexp = SP.DYN.LE00.IN)
+
+to_keep_wdi <- c("wbcode", "year", "lifeexp")
+wdi <- select(wdi, all_of(to_keep_wdi))
+```
+
+
+```{r}
+
+data("pwt10.01")
+
+pwt  <- pwt10.01  %>% 
+  rename(wbcode = isocode)
+
+to_keep_pwt <- c("year", "pop", "wbcode", "cgdpe", "ctfp", "cn", "csh_i", "hc", "csh_g", "csh_x", "csh_m")
+pwt <- select(pwt, all_of(to_keep_pwt))
+
+pwt <- pwt %>%
+  group_by(year) %>%
+  mutate(cgdpe_capita = cgdpe / pop,
+         cn_capita = cn / pop,
+         csh_i = 100* csh_i,
+         csh_g = 100* csh_g,
+         csh_m = 100* csh_m,
+         csh_x = 100 * csh_x) %>%
+  ungroup()
+
+# Keep variables of interest #
+
+```
+
+
+```{r}
+merged_data <- merge(x = merge(pwt, democracy_acemoglu, by = c("wbcode", "year")), y = wdi, by = c("wbcode", "year"))
+```
+
+
+
+```{r}
+# Define a list of the columns to interpolate
+cols_to_interpolate <- c("cgdpe", "ctfp", "cn", "csh_i", "hc", "csh_g", "csh_x", "csh_m","lifeexp")
+# Split the data by 'wbcode'
+split_data <- split(merged_data, merged_data$wbcode)
+
+# Interpolate each data frame separately
+interpolated_data <- lapply(split_data, function(df) {
+  for (col_name in cols_to_interpolate) {
+    if (col_name != "wbcode" && !all(is.na(df[[col_name]]))) {
+      # Find the earliest non-NA value
+      earliest_non_na <- min(which(!is.na(df[[col_name]])))
+      # Subset the vector starting from the earliest non-NA value
+      subset_vector <- df[[col_name]][earliest_non_na:length(df[[col_name]])]
+      # Only interpolate NA values
+      subset_vector[is.na(subset_vector)] <- zoo::na.spline(subset_vector)[is.na(subset_vector)]
+      df[[col_name]][earliest_non_na:length(df[[col_name]])] <- subset_vector
+    }
+  }
+  return(df)
+})
+
+# Combine the list of data frames back into one data frame
+interpolated_data <- do.call(rbind, interpolated_data)
+
+```
+
+```{r}
+threshold_year <- 1970
+
+
+variables <-c("cgdpe", "ctfp", "cn", "csh_i", "hc", "csh_g", "csh_x", "csh_m", "lifeexp")
+
+complete_wbcode <- interpolated_data %>%
+  filter(year >= threshold_year) %>%
+  group_by(wbcode) %>%
+  filter(all(complete.cases(across(variables)))) %>%
+  pull(wbcode) %>%
+  unique()
+
+
+merged_data_complete <- interpolated_data %>%
+  filter(wbcode %in% complete_wbcode) %>%
+  filter(year >= threshold_year)
+
+```
+
+```{r}
+n <- as.numeric(length(unique(merged_data_complete$wbcode)))
+T <- as.numeric(length(unique(merged_data_complete$year)))
+
+
+
+l.gdp <- log(matrix(merged_data_complete$cgdpe_capita, T, n))
+dem <- matrix(merged_data_complete$dem, T, n)
+l.capital <- log(matrix(merged_data_complete$cn_capita, T, n))
+l.inv <- log(matrix(merged_data_complete$csh_i, T, n))
+l.tfp <- log(matrix(merged_data_complete$ctfp, T, n))
+l.hc <- log(matrix(merged_data_complete$hc, T, n))
+l.gvt <- log(matrix(merged_data_complete$csh_g, T, n))
+l.gvt2 <- log(matrix(merged_data_complete$csh_g^2, T, n))
+l.lifeexp <- log(matrix(merged_data_complete$lifeexp, T, n))
+l.trade <- log(matrix(merged_data_complete$csh_x, T, n))
+
+
+
+
+
+```
+
+
+```{r}
+KSS.fit <- KSS(l.gdp ~ dem +  l.inv + l.capital + l.tfp + l.gvt + l.hc + l.lifeexp + l.trade  -1,
+                 additive.effects = "twoways", CV = TRUE, consult.dim.crit = TRUE)
+
+
+checkSpecif(KSS.fit, level = 0.01)
+summary(KSS.fit)
+
+plot(summary(KSS.fit))
+
+
+```
+```{r}
+
+d.l.gdp <- diff(log(matrix(merged_data_complete$cgdpe_capita, T, n)))
+d.dem <- matrix(merged_data_complete$dem[-1], T-1, n)
+d.l.capital <- diff(log(matrix(merged_data_complete$cn_capita, T, n)))
+d.l.inv <- diff(log(matrix(merged_data_complete$csh_i, T, n)))
+d.l.tfp <- diff(log(matrix(merged_data_complete$ctfp, T, n)))
+d.l.hc <- diff(log(matrix(merged_data_complete$hc, T, n)))
+d.l.gvt <- diff(log(matrix(merged_data_complete$csh_g, T, n)))
+d.l.gvt2 <- diff(log(matrix(merged_data_complete$csh_g^2, T, n)))
+d.l.lifeexp <- diff(log(matrix(merged_data_complete$lifeexp, T, n)))
+d.l.trade <- diff(log(matrix(merged_data_complete$csh_x, T, n)))
+
+```
+
+```{r}
+Eup.fit <- Eup(d.l.gdp ~ d.dem +  d.l.inv + d.l.capital + d.l.tfp + d.l.gvt + + d.l.hc + d.l.lifeexp + d.l.trade -1,
+                 additive.effects = "twoways", dim.criterion = "PC3")
+
+checkSpecif(Eup.fit, level = 0.01)
+summary(Eup.fit, error.type = 5)
+plot(summary(Eup.fit, error.type = 5))
+
+```
+
+
+
+
+```{r warning=FALSE}
+
+# Define a wrapper function for Eup
+KSSWrapper <- function(data, indices) {
+  d <- data[indices, ]
+  
+  n <- as.numeric(length(unique(d$wbcode)))
+  T <- as.numeric(length(unique(d$year)))
+
+  l.gdp <- log(matrix(d$cgdpe_capita, T, n))
+  dem <- matrix(d$dem, T, n)
+  l.capital <- log(matrix(d$cn_capita, T, n))
+  l.inv <- log(matrix(d$csh_i, T, n))
+  l.tfp <- log(matrix(d$ctfp, T, n))
+  l.hc <- log(matrix(d$hc, T, n))
+  l.gvt <- log(matrix(d$csh_g, T, n))
+  l.gvt2 <- log(matrix(d$csh_g^2, T, n))
+  l.lifeexp <- log(matrix(d$lifeexp, T, n))
+  l.trade <- log(matrix(d$csh_x, T, n))
+
+
+  
+  KSS.fit <- KSS(l.gdp ~ dem +  l.inv + l.capital + l.tfp + l.gvt + l.hc + l.lifeexp + l.trade  -1,
+                 additive.effects = "twoways", CV = TRUE)
+  
+  return(KSS.fit$slope.para)  # Return the coefficients of the Eup model
+}
+
+# Run bootstrap using boot function
+boot_results_KSS <- boot(merged_data_complete, KSSWrapper, R = 1000)
+
+```
+
+
+```{r}
+boot_results_KSS
+
+plot(boot_results_KSS)
+
+boot_cis_KSS <- lapply(1:8, function(i) boot.ci(boot.out = boot_results_KSS, index = i, type = "perc"))
+
+boot_cis_KSS
+```
+
+```{r}
+# Load the TOSTER library
+library(TOSTER)
+
+# Set equivalence bounds
+lower_bound <- -0.5
+upper_bound <- 0.5
+
+# Extract the bootstrap estimates for 'dem'
+dem_bootstrap_estimates <- boot_results_KSS$t[, 1]
+
+# Calculate the mean and standard deviation
+mean_estimate <- mean(dem_bootstrap_estimates)
+sd_estimate <- sd(dem_bootstrap_estimates)
+
+# Perform the TOST procedure
+tost_result <- TOSTone(m = mean_estimate, mu = 0, sd = sd_estimate, n = length(dem_bootstrap_estimates), low_eqbound_d = lower_bound, high_eqbound_d = upper_bound)
+
+# Print the result
+print(tost_result)
+
+
+```
+
+
+```{r}
+
+# Create a data frame from bootstrap results
+boot_results_df <- do.call(rbind, lapply(boot_cis_KSS, function(x) {
+  c(x$percent[4:5])
+}))
+
+# Set column names
+colnames(boot_results_df) <- c("lower_bound_95", "upper_bound_95")
+rownames(boot_results_df) <- c("dem", "inv", "l.capital", "tfp", "gvt", "gvt2", "hc", "lifeexp", "trade")
+
+
+# Latex Table
+latex_table <- xtable(boot_results_df, caption="Bootstrap results")
+print(latex_table, type="latex", caption.placement = "top", include.rownames = TRUE, hline.after=NULL, add.to.row = list(pos = list(-1, 0, nrow(boot_results_df)), command = c('\\hline \n', '\\hline \n', '\\hline \n')))
+
+
+
+
+```
+
+
+```{r message=FALSE}
+# Define a wrapper function for Eup
+EupWrapper2 <- function(data, indices) {
+  d <- data[indices, ]
+  
+  n <- as.numeric(length(unique(d$wbcode)))
+  T <- as.numeric(length(unique(d$year)))
+
+  
+  
+  d.l.gdp <- diff(log(matrix(d$cgdpe_capita, T, n)))
+  d.dem <- matrix(d$dem[-1], T-1, n)
+  d.l.capital <- diff(log(matrix(d$cn_capita, T, n)))
+  d.l.inv <- diff(log(matrix(d$csh_i, T, n)))
+  d.l.tfp <- diff(log(matrix(d$ctfp, T, n)))
+  d.l.hc <- diff(log(matrix(d$hc, T, n)))
+  d.l.gvt <- diff(log(matrix(d$csh_g, T, n)))
+  d.l.gvt2 <- diff(log(matrix(d$csh_g^2, T, n)))
+  d.l.lifeexp <- diff(log(matrix(d$lifeexp, T, n)))
+  d.l.trade <- diff(log(matrix(d$csh_x, T, n)))
+
+  
+  Eup.fit <- Eup(d.l.gdp ~ d.dem +  d.l.inv + d.l.capital + d.l.tfp + d.l.gvt + d.l.hc + d.l.lifeexp + d.l.trade  -1,
+                 additive.effects = "twoways", CV = TRUE)
+  
+  Eup.fit.sum <- summary(Eup.fit, error.type = 8)
+  
+  return(Eup.fit.sum$coefficients[,1])  # Return the coefficients of the Eup model
+}
+
+# Run bootstrap using boot function
+boot_results_Eup <- boot(merged_data_complete, EupWrapper2, R = 1000)
+```
+
+```{r}
+boot_results_Eup
+```
+```{r}
+# Load the TOSTER library
+library(TOSTER)
+
+# Set equivalence bounds
+lower_bound <- -0.1
+upper_bound <- 0.1
+
+# Extract the bootstrap estimates for 'dem'
+dem_bootstrap_estimates <- boot_results_Eup$t[, 1]
+
+# Calculate the mean and standard deviation
+mean_estimate <- mean(dem_bootstrap_estimates)
+sd_estimate <- sd(dem_bootstrap_estimates)
+
+# Perform the TOST procedure
+tost_result <- TOSTone(m = mean_estimate, mu = 0, sd = sd_estimate, n = length(dem_bootstrap_estimates), low_eqbound_d = lower_bound, high_eqbound_d = upper_bound)
+
+# Print the result
+print(tost_result)
+```
+```{r}
+
+```
+
