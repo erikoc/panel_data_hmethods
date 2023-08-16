@@ -293,7 +293,7 @@ generate_panel_errors <- function(T, n, X, error = "homo", rho = 0.5) {
   if (error == "homo") {
     e <- rnorm(n * T)
   } else if (error == "hetero_time") {
-    e <- numeric(n * T) 
+    e <-  rep(NA, times = n*T) 
     for (i in 1:n) {
       for (t in 1:T) {
         sigma <- sqrt(1 + t)  # variance increasing over time
@@ -301,18 +301,18 @@ generate_panel_errors <- function(T, n, X, error = "homo", rho = 0.5) {
       }
     }
   } else if (error == "hetero_individual") {
-    e <- numeric(n * T) 
+    e <-  rep(NA, times = n*T)
     for (i in 1:n) {
-      sigma_i <- sqrt(1 + i)  # variance increasing with individual
+      sigma_i <- sqrt(1 + i/10)  # variance increasing with individual
       for (t in 1:T) {
         e[(i-1)*T + t] <- rnorm(1, mean = 0, sd = sigma_i)
       }
     }
   } else if (error == "hetero_both") {
-    e <- numeric(n * T) 
+    e <-  rep(NA, times = n*T)
     for (i in 1:n) {
       for (t in 1:T) {
-        sigma <- sqrt(1 + t + i)  # variance increasing with time and individual
+        sigma <- sqrt(1 + t + i/10)  # variance increasing with time and individual
         e[(i-1)*T + t] <- rnorm(1, mean = 0, sd = sigma)
       }
     }

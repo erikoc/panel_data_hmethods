@@ -9,21 +9,24 @@ calculate_means <- function(results, path, estimator) {
   sd1_mean <- mean(results[[path]][[estimator]]$sd1)
   sd2_mean <- mean(results[[path]][[estimator]]$sd2)
   mse_mean <- mean(results[[path]][[estimator]]$mse.coeff)
+  power1_mean <- mean(results[[path]][[estimator]]$power1) # Assuming p1 is the p-value for b1
+  power2_mean <- mean(results[[path]][[estimator]]$power2) # Assuming p2 is the p-value for b2
   
-  if (estimator %in% c("KSS", "Eup")) {
+  if (estimator %in% c("KSS", "Eup", "Bai")) {
     mse_effects_mean <- mean(results[[path]][[estimator]]$mse.effect)
     used.dim_mean <- mean(results[[path]][[estimator]]$used.dim)
-    return(list(b1_mean = b1_mean, b2_mean = b2_mean, sd1_mean = sd1_mean, sd2_mean = sd2_mean, mse_mean = mse_mean, mse_effects_mean = mse_effects_mean, used.dim_mean = used.dim_mean))
+    return(list(b1_mean = b1_mean, b2_mean = b2_mean, sd1_mean = sd1_mean, sd2_mean = sd2_mean, mse_mean = mse_mean, power1_mean = power1_mean, power2_mean = power2_mean, mse_effects_mean = mse_effects_mean, used.dim_mean = used.dim_mean))
   } else {
-    return(list(b1_mean = b1_mean, b2_mean = b2_mean, sd1_mean = sd1_mean, sd2_mean = sd2_mean, mse_mean = mse_mean))
+    return(list(b1_mean = b1_mean, b2_mean = b2_mean, sd1_mean = sd1_mean, sd2_mean = sd2_mean, mse_mean = mse_mean, power1_mean = power1_mean, power2_mean = power2_mean))
   }
 }
+
 
 calculate_means_for_paths_and_estimators <- function(all_results, DGP, 
                                                      paths = c("T12_n30_nsim1000_", "T30_n30_nsim1000_", 
                                                                "T12_n100_nsim1000_", "T30_n100_nsim1000_", 
                                                                "T12_n300_nsim500_", "T30_n300_nsim500_"), 
-                                                     estimators = c("Eup", "KSS", "Within")) {
+                                                     estimators = c("Eup", 'Bai', "KSS", "Within")) {
   #' Calculate means for specified paths and estimatWors
   #'
   #' This function loops through each specified path and estimator,
@@ -51,23 +54,22 @@ calculate_means_for_paths_and_estimators <- function(all_results, DGP,
 }
 
 
-
 generate_latex_table <- function(all_means_list, DGP){
-  categories <- c('KSS', 'Eup', 'Within')
+  categories <- c('KSS', 'Bai', 'Eup', 'Within') 
   T_values <- c('T12', 'T30')
   n_values <- c('n30', 'n100', 'n300')
   
-  cat('\\begin{tabular}{ccccccc}', "\n")
+  cat('\\begin{tabular}{ccccccccc}', "\n") 
   cat('\\hline', "\n")
-  cat('\\multicolumn{7}{c}{MSE, Bias, Variance for Coefficients} \\\\ \\hline', "\n")
-  cat('& \\multicolumn{3}{c}{$T=12$} & \\multicolumn{3}{c}{$T=30$} \\\\ \\cline{2-4} \\cline{5-7}', "\n")
-  cat('& KSS & Eup & Within & KSS & Eup & Within \\\\')
+  cat('\\multicolumn{9}{c}{MSE, Bias, Variance for Coefficients} \\\\ \\hline', "\n")
+  cat('& \\multicolumn{4}{c}{$T=12$} & \\multicolumn{4}{c}{$T=30$} \\\\ \\cline{2-5} \\cline{6-9}', "\n") 
+  cat('& KSS &  Bai & Eup & Within & KSS & Bai &  Eup & Within \\\\') 
   
   for (n in n_values){
     nsim_value <- ifelse(n == "n300", "nsim500", "nsim1000")
-    n_display <- sub("n", "", n) # Remove 'n' prefix for display
+    n_display <- sub("n", "", n) 
     
-    cat('\\multicolumn{7}{l}{$n =', n_display, '} \\\\')
+    cat('\\multicolumn{8}{l}{$n =', n_display, '} \\\\') 
     
     cat('MSE ')
     for (T in T_values){
@@ -128,7 +130,6 @@ generate_latex_table <- function(all_means_list, DGP){
         }
       }
     }
-    
     cat('\\\\ \\hline', "\n")
   }
   
@@ -139,9 +140,9 @@ generate_latex_mse_effects_table <- function(results_type, DGP) {
   n_values <- c(30, 100, 300)
   T_values <- c(12, 30)
   
-  cat('\\begin{tabular}{lcccccc}', "\n")
-  cat('\\hline \\multicolumn{6}{c}{MSE of Effects} \\\\ \\hline', "\n")
-  cat('$n$ & $T$ & KSS & Eup & $d_{KSS}$ & $d_{Eup}$ \\\\\n')
+  cat('\\begin{tabular}{lccccccc}', "\n") # Added one more column
+  cat('\\hline \\multicolumn{7}{c}{MSE of Effects} \\\\ \\hline', "\n") # Updated the number of columns
+  cat('$n$ & $T$ & KSS & Bai & Eup & $d_{KSS}$ & $d_{Bai}$ & $d_{Eup}$ \\\\\n') # Added 'Bai'
   cat('\\hline\n')
   
   for (n in n_values) {
@@ -156,16 +157,18 @@ generate_latex_mse_effects_table <- function(results_type, DGP) {
       }
       
       cat(" & ", format(round(results_type[[key]]$KSS$mse_effects_mean, 4), nsmall=4),
+          " & ", format(round(results_type[[key]]$Bai$mse_effects_mean, 4), nsmall=4), 
           " & ", format(round(results_type[[key]]$Eup$mse_effects_mean, 4), nsmall=4),
           " & ", format(round(results_type[[key]]$KSS$used.dim_mean, 4), nsmall=4),
+          " & ", format(round(results_type[[key]]$Bai$used.dim_mean, 4), nsmall=4), 
           " & ", format(round(results_type[[key]]$Eup$used.dim_mean, 4), nsmall=4),
           " \\\\\n")
     }
   }
   
-  #cat('\\hline\n')
   cat('\\end{tabular}', "\n")
 }
+
 
 generate_combined_latex_table <- function(all_means_list, scenario, DGP) {
   

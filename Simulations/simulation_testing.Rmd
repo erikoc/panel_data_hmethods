@@ -133,9 +133,23 @@ plot(e[1:T], type = "p", xlab = "Observation", ylab = "Error", main = "Panel Err
 
 # 2. Heteroskedastic 
 
-e <- generate_panel_errors(T, n, X, error = "hetero") 
+e <- generate_panel_errors(T, n, X, error = "hetero_time") 
 
 plot(e[1:T], type = "p", xlab = "Observation", ylab = "Error", main = "Panel Errors")
+
+
+e <- generate_panel_errors(T, n, X, error = "hetero_individual") 
+
+plot(e[1:n], type = "p", xlab = "Observation", ylab = "Error", main = "Panel Errors")
+
+e <- generate_panel_errors(T, n, X, error = "hetero_both") 
+
+plot(e[1:T], type = "p", xlab = "Observation", ylab = "Error", main = "Panel Errors")
+
+e <- generate_panel_errors(T, n, X, error = "hetero_both") 
+
+plot(e[1:n], type = "p", xlab = "Observation", ylab = "Error", main = "Panel Errors")
+
 
 
 # 2. Autocorrelated errors
@@ -184,6 +198,7 @@ create_plm_data(T, n, Y, X, V)
 ```{r}
 
 library(plm)
+library(lmtest)
 
 n <- 30
 T <- 12
@@ -191,21 +206,24 @@ T <- 12
 
 beta <- c(0.5,0.5)
 
-data <- DataGeneratingFunction(T, n, beta = beta, DGP = "K3" , endogenous = FALSE, error = "homo", rho = 0.5)
+data <- DataGeneratingFunction(T, n, beta = beta, DGP = "K1" , endogenous = FALSE, error = "homo", rho = 0.5)
 data_plm <- data[["plm"]]
 data_Tn <-  data[["Tn"]]
 
-#KSS.fit <- KSS(data_Tn$Y ~ data_Tn$X_1 + data_Tn$X_2 -1, CV = TRUE, consult.dim.crit =  TRUE)
-#summary(KSS.fit)
+KSS.fit <- KSS(data_Tn$Y ~ data_Tn$X_1 + data_Tn$X_2 -1)
+summary(KSS.fit)
 #plot(summary(KSS.fit))
 
 
-Eup.fit <- Eup(data_Tn$Y ~ data_Tn$X_1 + data_Tn$X_2 -1, dim.criterion = "PC1")
-summary(Eup.fit)
-plot(summary(Eup.fit))
+#Eup.fit <- Eup(data_Tn$Y ~ data_Tn$X_1 + data_Tn$X_2 -1, dim.criterion = "PC1", d.max = 6)
+#summary(Eup.fit)
+#plot(summary(Eup.fit))
 
-plm_fit <- plm(data_plm$Y ~ data_plm$X_1 + data_plm$X_2 -1, data = data_plm,  model = "within")
-summary(plm_fit)
+#plm_fit <- plm(data_plm$Y ~ data_plm$X_1 + data_plm$X_2 -1, data = data_plm,  model = "within")
+#summary(plm_fit)
+
+#coeftest(plm_fit, vcov = vcovHC(plm_fit, type = "sss"))
+#x <- y coeftest(plm_fit, vcov=vcovHC(plm_fit,type="HC0",cluster="group"))
 ```
 
 8. `doMonteCarlo`
@@ -221,7 +239,7 @@ T <- 12
 beta <- c(0.5,0.5)
 nsim <- 10
 
-timing <- system.time({results <- doMonteCarlo(nsim, T, n, beta, DGP = "K3", error = "homo")})
+timing <- system.time({results <- doMonteCarlo(nsim, T, n, beta = beta, DGP = "K1" , endogenous = FALSE, error = "hetero_both", rho = 0.5)})
 print(timing)
 
 
