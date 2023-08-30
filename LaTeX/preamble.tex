@@ -14,7 +14,16 @@
 \usepackage[nameinlink]{cleveref}
 \usepackage{natbib}
 \usepackage{multirow}
+\usepackage{multicol}
 \usepackage[table]{xcolor}
+\usepackage{tabularx}
+\usepackage{rotating}
+\usepackage{booktabs}
+\usepackage{blindtext}
+\usepackage{comment}
+\usepackage[title]{appendix}
+\usepackage{fancyhdr}
+\usepackage[justification=centering]{caption}
 \bibliographystyle{apa-good}
 \newcommand{\ep}{\varepsilon}
 \newcommand{\vp}{\varphi}
@@ -160,16 +169,43 @@
 \DeclareMathOperator{\Im}{\text{Im}}
 \DeclareMathOperator{\diag}{\text{diag}}
 
+\usepackage{acronym}
+\acrodef{cdf}[cdf]{Cumulative Distribution Function}
+\acrodef{pdf}[pdf]{Probability Density Function}
+\acrodef{pmf}[pmf]{Probability Mass Function}
+\acrodef{iid}[i.i.d.]{independent and identically distributed}
+\acrodef{did}[DiD]{Difference-in-Difference}
+\acrodef{ols}[OLS]{Ordinary Least Squares}
+\acrodef{twfe}[TWFE]{Two-Way Fixed Effects}
+\acrodef{twfer}[TWFEr]{Two-Way Fixed Effects Regression}
+\acrodef{OWFE}[OWFE]{One-Way Fixed Effects}
+\acrodef{TOST}[TOST]{Two One-Sided Tests}
+\acrodef{GDP}[GDP]{Gross Domestic Product}
+\acrodef{DGPs}[DGPs]{Data-Generating Processes}
+\acrodef{DGP}[DGP]{Data-Generating Process}
+\acrodef{KSS}[KSS]{Kneip, Sickles and Song}
+\acrodef{Eup}[Eup]{Entirely Updated Estimators}
+\acrodef{CV}[CV]{Cross-Validation}
+\acrodef{GCV}[GCV]{Generalized Cross-Validation}
+\acrodef{CI}[CI]{Confidence Interval}
+\acrodef{MSE}[MSE]{Mean Squared Error}
+
+
+
 \begin{document}
+
+\setlength\tabcolsep{3.5pt}
 
 \pagenumbering{arabic}
 
 \begin{titlepage}
 \begin{center}
 
-\textbf{Methods in Panel Data Models with Heterogeneous Time Trends}
+\vspace*{1cm}
 
-\vspace{1cm}
+{\Large \textbf{Factor-Based Modeling of Fixed Effects in Panel Data Methods: A Comparative Analysis}}
+
+\vspace{3cm}
 Master Thesis Presented to the 
 
 Department of Economics at the
@@ -180,18 +216,19 @@ Rheinische Friedrich-Wilhelms-Universität Bonn
 \vspace{1cm}
 In Partial Fulfillment of the Requirements for the Degree of
 
-
 Master of Science (M.Sc.)
 
-\vspace{1cm}
+\vspace{6cm}
 
-Supervisor: Porf. Dr. Dominik Liebl
+Supervisor: Prof. Dr. Dominik Liebl
 
+\vfill
 Submitted in August 2023 by:
 
 Erik Ortiz Covarrubias 
 
 Matriculation Number: 3395844
+
 \end{titlepage}
 \end{center}
 

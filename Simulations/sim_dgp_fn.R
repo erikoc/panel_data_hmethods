@@ -183,71 +183,6 @@ generate_V4 <- function(T, n) {
 }
 
 
-
-generate_V5 <- function(T,n){
-  #' Generates the individual effects V using DGP B1
-  #'
-  #' This function generates the individual effects V for a panel data model using DGP K4.
-  #'
-  #' @param T The number of time periods.
-  #' @param n The number of individuals.
-  #'
-  #' @return The matrix V representing the individual effects.
-  
-  f_1 <- rnorm(T, mean = 0, sd = 1)
-  f_2 <- rnorm(T, mean = 0, sd = 1)
-  
-  lamb_1 <- rnorm(n, mean = 0, sd = 1)
-  lamb_2 <- rnorm(n, mean = 0, sd = 1)
-  
-  # Generating time-invariant error terms
-  v_list <- vector("list", n)
-  
-  for (i in 1:n) {
-    v_i <- matrix(NA, nrow = T, ncol = 1)
-    for (t in 1:T) {
-      v_i[t] <- lamb_1[i]*f_1[t] + lamb_2[i] * f_2[t]
-    }
-    v_list[[i]] <- v_i
-  }
-  
-  V <- do.call(rbind, v_list)
-  
-  return(V)
-}
-
-
-generate_V6 <- function(T, n, d = 0.25) {
-  #' Generates the individual effects V using a damped sine wave
-  #'
-  #' This function generates the individual effects V for a panel data model using a damped sine wave.
-  #'
-  #' @param T The number of time periods.
-  #' @param n The number of individuals.
-  #' @param d The damping factor. Larger values will cause the peaks to decrease more quickly.
-  #'
-  #' @return The matrix V representing the individual effects.
-  
-  v_1 <- rnorm(n, mean = 0, sd = 1) * 3
-  
-  v_list <- vector("list", n)
-  
-  for (i in 1:n) {
-    v_i <- matrix(NA, nrow = T, ncol = 1)
-    for (t in 1:T) {
-      v_i[t] <- exp(-d * t) * (v_1[i] * sin(pi * t / 4))
-    }
-    v_list[[i]] <- v_i
-  }
-  
-  V <- do.call(rbind, v_list)
-  
-  return(V)
-}
-
-
-
-
 endogenous_X <- function(T, n, X, V, rho = 0.5) {
   #' Generates the endogenous variables X with correlated shocks
   #'
@@ -277,7 +212,7 @@ endogenous_X <- function(T, n, X, V, rho = 0.5) {
 
 
 
-generate_panel_errors <- function(T, n, X, error = "homo", rho = 0.5) {
+generate_panel_errors <- function(T, n, X, error = "homo") {
   #' Generates the panel errors
   #'
   #' This function generates the panel errors for a panel data model.
@@ -316,7 +251,16 @@ generate_panel_errors <- function(T, n, X, error = "homo", rho = 0.5) {
         e[(i-1)*T + t] <- rnorm(1, mean = 0, sd = sigma)
       }
     }
-  } else if (error == "autocorr") {
+  } else if (error == "autocorr_low") {
+    rho <- runif(1, min = -0.3, max = 0.3)
+    e <- rnorm(n * T)
+    for (i in 1:n) {
+      for (t in 2:T) {
+        e[(i-1)*T + t] <- rho * e[(i-1)*T + t-1] + sqrt(1 - rho^2) * e[(i-1)*T + t]
+      }
+    }
+  } else if (error == "autocorr_high") {
+    rho <- runif(1, min = 0.6, max = 0.8)
     e <- rnorm(n * T)
     for (i in 1:n) {
       for (t in 2:T) {
@@ -331,10 +275,19 @@ generate_panel_errors <- function(T, n, X, error = "homo", rho = 0.5) {
 }
 
 
-
-
-
-create_plm_data <- function(T, n, Y, X, V){
+create_plm_data <- function(T, n, Y, X, V) {
+  #' Create a Panel Data Frame
+  #' 
+  #' This function constructs a panel data frame with given input vectors or matrices.
+  #' It assembles the data in long format and defines the individual and time indices.
+  #' 
+  #' @param T An integer, the number of time periods.
+  #' @param n An integer, the number of cross-sectional units (individuals).
+  #' @param Y A vector or matrix of dependent variable observations.
+  #' @param X A matrix of independent variable observations with two columns.
+  #' @param V A vector or matrix of additional variable observations.
+  #' 
+  #' @return A pdata.frame object with the assembled data, including individual and time indices.
   
   individual_index <- rep(1:n, each = T)
   time_index <- rep(1:T, times = n)
@@ -344,6 +297,7 @@ create_plm_data <- function(T, n, Y, X, V){
   
   return(plm)
 }
+
 
 create_Tn_mat <- function(T, n, Y, X, V) {
   #' Creates Tn matrices from the data
@@ -370,7 +324,7 @@ create_Tn_mat <- function(T, n, Y, X, V) {
 
 
 
-DataGeneratingFunction <- function(T, n, beta, DGP, endogenous = FALSE, error = "homo", rho) {
+DataGeneratingFunction <- function(T, n, beta, DGP, endogenous = FALSE, error = "homo") {
   #' Generates panel data using the specified parameters
   #'
   #' This function generates panel data using the specified parameters.
@@ -398,10 +352,6 @@ DataGeneratingFunction <- function(T, n, beta, DGP, endogenous = FALSE, error = 
     V <- generate_V3(T, n)
   } else if (DGP == "K4") {
     V <- generate_V4(T, n)
-  } else if (DGP == "B1") {
-  V <- generate_V5(T,n)
-  } else if (DGP == "E1") {
-  V <- generate_V6(T,n)
   }
   
   # Create endogenous regressors, when specified
@@ -410,7 +360,7 @@ DataGeneratingFunction <- function(T, n, beta, DGP, endogenous = FALSE, error = 
   }
   
   # Generate error terms, as specified
-  e <- generate_panel_errors(T, n, X, error, rho)
+  e <- generate_panel_errors(T, n, X, error)
   
   # The Model
 
@@ -421,7 +371,23 @@ DataGeneratingFunction <- function(T, n, beta, DGP, endogenous = FALSE, error = 
   # Convert to T,n matrixes
   Tn <- create_Tn_mat(T, n, Y, X, V)
   
-  return(list(plm = plm, Tn = Tn))
+  # Determine true dimension
+  
+  # Extract information about d
+  
+  if (DGP == "K1") {
+    d <- 3
+  } else if (DGP == "K2") {
+    d <- 1
+  } else if (DGP == "K3") {
+    d <- 2
+  } else if (DGP == "K4") {
+    d <- 1
+  } else {
+    stop("Unknown DGP value") # This will stop execution if DGP does not match any known value
+  }
+  
+  return(list(plm = plm, Tn = Tn, d = d))
 }
 
 

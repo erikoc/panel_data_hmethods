@@ -1,485 +1,1507 @@
 \input{preamble.tex}
 
+\setcounter{tocdepth}{2}
 \pagenumbering{gobble}
 \tableofcontents
+%\listoftables
+%\listoffigures
 \clearpage
 
 \pagenumbering{arabic}
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[C]{\leftmark}
+\fancyfoot[C]{\thepage}
+
+\fancypagestyle{plainfancy}{
+    \fancyhf{} % clear all fields
+    \renewcommand{\headrulewidth}{0pt} % no line in header
+    \fancyfoot[C]{\thepage} % page number in center
+}
+
 \section{Introduction}
+\thispagestyle{plainfancy}
 
-Panel data models offer the ability to manage unobserved endogeneity and allow for broader forms of heterogeneity \citep{hansen2022econometrics}. 
 
-\citet{kneip2012new} propose estimating the time-varying individual effects nonparametrically. This is achieved through a two-stage procedure involving spline smoothing and principal component analysis. 
+Panel data methods have long been used to deal with unobserved heterogeneity. Classical estimators, such as the fixed-effects and random-effects approaches, operate under the presumption that unobserved heterogeneity remains consistent across time for each cross-sectional unit (see, e.g., \citet{arellano2003panel}). While such an assumption may be fitting for panel data with small temporal dimensions $T$, it becomes increasingly untenable as $T$ expands.
 
-\section{The Model}
+Recently, there has been a shift towards more generalized specifications for unobserved heterogeneity. Studies by \citet{bai2008large}, \citet{bai2009panel}, \citet{kneip2012new} and \citet{bada2014parameter}  have explored advanced panel models that permit individual-specific time trends which can be approximated by a factor structure. This dissertation offers a comparative analysis of the methods developed by \citet{bai2009panel}, \citet{kneip2012new} and \citet{bada2014parameter} in the context of this new class of panel data models. 
 
-We assume balanced panel data with $n$ cross-sectional units and $T$ time periods. We aim to model the variation of an independent variable $y_{it}$ for  $i \in \{1, ..., n\}$ and $t \in \{1, ..., T\}$ in dependent explanatory variables $x_{it} \in \R^P$.  We consider the following panel data model:
+A general overview of the estimators is provided, delving into their theoretical foundations, estimation techniques, and related asymptotic behaviors. Simulation studies considering various specifications for the time-varying individual effects and multiple configurations for the idiosyncratic error terms favor the estimator developed by \citet{bada2014parameter} while the results for the approach advanced by \citet{kneip2012new} are mixed. Additionally, the performance of the method proposed by \citet{bai2009panel} depends on the external estimation of the factor dimension. 
+
+As an illustration, factor-based methods are applied to analyze the effect of democracy on \ac{GDP} growth, offering a novel contribution to the enduring debate surrounding the issue. In particular, the analysis presents a reexamination of the results in \citet{acemoglu2019democracy} and \citet{chen2019mastering}. In contrast to the referenced work, the results of this exercise show that once the unobserved factor structure is explicitly modeled for, the effect of democracy on \ac{GDP} growth is small and non-significant. 
+
+
+The rest of this work is structured as follows. \Cref{section2} presents the basic form of the factor-based panel data models, accompanied by examples highlighting their significance in economics. \Cref{estimation} offers a lengthy description of the methods considered. Further, in  \Cref{asymptotics}, I concisely discuss the related asymptotics. The estimation of the unknown factor dimension is briefly discussed in \Cref{dimension}. \Cref{simulation} contains the setup and main results of the simulation studies. Lastly, \Cref{application} showcases the practical application of the factor-based methods by examining the effect of democracy on \ac{GDP} growth.
+
+
+
+\section{The Model}\label{section2}
+
+Henceforth, I assume a balanced panel data with $n$ cross-sectional units and $T$ time periods. The goal is to model the variation of a response variable $y_{it}$ for  $i \in \{1, ..., n\}$ and $t \in \{1, ..., T\}$ with respect to a set of explanatory variables $x_{it} \in \R^P$. Throughout this study, I consider the following a model:
 
 
 \begin{equation}\label{model1}
-    y_{it} = \sum_{j=1}^P x_{itj}\beta_j + \nu_{it} + \varepsilon_{it}
+    y_{it} = \sum_{j=1}^P x_{itj}\beta_j + \nu_{it} + \varepsilon_{it},
 \end{equation}
 
-Where $x_{itj}$ is the $jth$ element of the vector of independent variables, $\varepsilon_{it}$ are idiosyncratic errors, and $\nu_{it} \in \R $ are unobserved non-constant individual effects. Note that whenever $x_{it}$ includes an intercept, identifiability requires $v_{it}$ to be centred around zero. Otherwise, the non-constant individual effects are centred around the overall mean. 
+where $x_{itj}$ is the $jth$ element of the vector of independent variables, $\varepsilon_{it}$ are idiosyncratic errors, and $\nu_{it} \in \R $ are unobserved non-constant individual effects. Specifically,  $\nu_{it}$ exhibits a factor structure that can be parametrized in terms of $d$ common factors. Note that whenever the explanatory variables $x_{it}$ include an intercept, $\nu_{it} $ must be centered around zero to maintain identifiability. Otherwise, the non-constant individual effects are centered around the overall mean \citep{kneip2012new, bada2012phtt}. The main focus of this dissertation lies in the estimation and analysis of $\beta$  and  $v_{it}$. Two alternative specifications of $\nu_{it}$ are considered, which are delineated as follows:
 
-Our main goal is to estimate and analyze  $v_{it}$. However, the estimation of $\beta$ remains of interest to us. We assume that $\nu_{it}$ has a factor structure which can be parametrized in terms of $d$ common factors as follows:
-
+ 
 \begin{equation}\label{factors}
- \nu_{i t}=\left\{\begin{array}{c}v_{i t}=\sum_{l=1}^d \lambda_{i l} f_{l t} \\ v_i(t)=\sum_{l=1}^d \lambda_{i l} f_l(t)\end{array}\right.
+ \nu_{i t}=\left\{\begin{array}{c}v_{i t}=\sum_{l=1}^d \lambda_{i l} f_{l t} \\ v_i(t)=\sum_{l=1}^d \lambda_{i l} f_l(t)\end{array}\right. .
 \end{equation}
 
 
-Here $\lambda_{il}$ are the individual loading parameters, $f_{lt}$ are the common factors of the general model of \citet{bai2009panel},  and $f_{l}(t)$ are the common factors for the model of \citet{kneip2012new}. %The type of models represented by equations (\ref{model1}) and (\ref{factors}) are known as interactive fixed-effects models. 
+Here $\lambda_{il}$ are the individual loading parameters, $f_{lt}$ are the common factors of the model developed by  \citet{bai2009panel},  and $f_{l}(t)$ are the common factors for the model of \citet{kneip2012new}. 
 
-\citet{bai2009panel} treats both $\lambda_{il}$ and $f_{lt}$ as fixed-effects parameters to be jointly estimated with $\beta$. Heteroskedasticity and dependency across time and cross-sectional units are allowed. Further, $f_{lt}$ is modelled as an integrated or stationary process, which is allowed to have a non-zero mean.  Both the individual loading parameters and the common factors parameters are allowed to be correlated with the regressors $x_{it}$.
+\citet{bai2009panel} describes the models represented by equations (\ref{model1}) and (\ref{factors}) as interactive fixed-effects models. The author treats $\lambda_{il}$ and $f_{lt}$ as fixed-effects parameters to be jointly estimated with $\beta$. The common factors $f_{lt}$ can follow a deterministic time trend or stationary dynamic processes. Further, heteroskedasticity and dependency across time and cross-sectional units are allowed. In turn, \citet{bada2014parameter} propose a specification which is derived from that of \citet{bai2009panel}, that allows for factors $f_{lt}$ to follow an integrated process $I(p)$ of order $p \leq 1$.  
 
-In contrast,  \citet{kneip2012new} model the time-varying individual effects as linear combinations of a small number of unknown basis functions ($f_l(t))$, where the individual loading parameters set the weight of every basis function for each cross-sectional unit. This translates into smooth, slowly varying local trends. The author's setup consequently allows for strongly correlated stationary and non-stationary factors. %not clear. 
+In contrast,  \citet{kneip2012new} model the time-varying individual effects as linear combinations of a small number of unknown basis functions $f_l(t)$, where the individual loading parameters set the weight of every basis function for each cross-sectional unit, which translates into smooth, slowly varying local trends. The non-constant individual effects are approximated non-parametrically. Thus, the approach advanced in the referenced work falls into the class of partially linear models. For a thorough review on this subject, see \citet{hardle2000partially}.  While \citet{kneip2012new} do allow for strongly correlated stationary and non-stationary factors, the method's asymptotic properties rely on \ac{iid} errors. 
+ 
+This general overview of the models and methods proposed by \citet{kneip2012new}, \citet{bai2009panel}, and \citet{bada2014parameter} should suffice for an understanding of the overarching framework. More detailed analyses on the estimation methods, limiting theory, and the estimation of the unknown factor dimension $d$ will be presented in Sections \ref{estimation}, \ref{asymptotics}, and \ref{dimension}. 
 
-This work will centre around the discussion of the model and estimation methods proposed by \citet{kneip2012new}, and its comparison to the general model synthesized by \citet{bai2009panel} and some of the estimation methods applicable to that setup. 
+\subsection{Classical Fixed Effects in Factor Modeling}
 
-\subsection{Interactive and additive fixed-effects}
 
-The specification in (\ref{model1})  includes the classic panel data models with additive fixed-effects model as a special case. Indeed, for $d=2$, a first common factor $f_{1t} = 1, \forall t$ with individual loading parameters $\lambda_{i1}$ and a second common factor of the form $f_{2t}$ with identical loading parameters $\lambda_{i2} = 1,  \forall i$ we get the classical two-way error component model:
+The specification in (\ref{model1})  includes the classic panel data models with additive fixed-effects as a special case. In the interest of concise notation, let $f_l(t)$ represent the common factors throughout this section. For the model proposed by \citet{bai2009panel}, this term can be replaced with $f_{lt}.$ Consider $d=2$, a first common factor $f_1(t) = 1$ for all $t \in \{1, ..., T\}$ with individual loading parameters $\lambda_{i1}$ and a second common factor of the form $f_2(t)$ with identical loading parameters $\lambda_{i2} = 1,$ for all $i \in \{1, ..., n\}$. This specification leads to the classical two-way error component model:
 
-\begin{equation*}
-      y_{it} = \sum_{j=1}^\rho x_{itj}\beta_j + \lambda_{i1} + f_{2t} + \varepsilon_{it}
-\end{equation*}
+\begin{equation}
+      y_{it} = \sum_{j=1}^P x_{itj}\beta_j + \lambda_{i1} + f_{2}(t) + \varepsilon_{it} .
+\end{equation}
 
-Nonetheless, unlike the case of classical additive effects panel models, well-known estimation methods, such as the within-transformation, are generally inadequate. To see this, consider the case where $d =1$, $ y_{it} = \sum_{j=1}^\rho x_{itj}\beta_j + \lambda_{i1}f_{1t} + \varepsilon_{it}$. Then, the within-transformation $ \dot{y}_{it}   =   y_{it} - \bar{y}_i = \sum_{j=1}^\rho (x_{it} - \bar{x}_i)\beta_j + \lambda_i(f_{1t} - \bar{f}) + \varepsilon_{it} - \bar{\varepsilon}_{i}$ is unable to eliminate the interactive effects since, generally, $f_{1t} \neq \bar{f}$. Hence, the within estimator is inconsistent for the model as the potential endogeneity between regressors and unobservables can't be addressed \citep{bai2009panel}. 
+Unlike the case of classical additive effects models, well-known estimation methods, such as the within-transformation, are generally inadequate to deal with an underlying factor structure. To see this, consider the case where $d =1$, $ y_{it} = \sum_{j=1}^P x_{itj}\beta_j + \lambda_{i1}f_1(t) + \varepsilon_{it}$. Then, the within-transformation $ \dot{y}_{it}   =   y_{it} - \bar{y}_i = \sum_{j=1}^P (x_{it} - \bar{x}_i)\beta_j + \lambda_i(f_1(t) - \bar{f}) + \varepsilon_{it} - \bar{\varepsilon}_{i}$ is unable to eliminate the interactive effects since, generally, $f_1(t) \neq \bar{f}$. The within estimator is thus inconsistent as the potential endogeneity between regressors and unobservables cannot be addressed \citep{bai2009panel}. 
 
-It is worth noting that since interactive-effects models encompass additive-effects models as a specific case, a consistent estimator for the former will also be consistent for the latter, albeit less efficient than the classical estimator \citep{bai2009panel}. To prevent inefficiency, it is possible to enhance model (\ref{model1}) by explicitly incorporating the classical additive effects,
+It is worth noting that since factor-based models encompass additive-effects models as a specific case, a consistent estimator for the former will also be consistent for the latter, albeit less efficient than the classical estimator \citep{bai2009panel}. To prevent inefficiency, it is possible to enhance model (\ref{model1}) by explicitly incorporating classical additive effects,
 
 \begin{equation}\label{explicit_model}
-    y_{it} = \sum_{j=1}^\rho x_{itj}\beta_j + \nu_{it} + \alpha_i + \xi_t + \varepsilon_{it},
+    y_{it} = \sum_{j=1}^P x_{itj}\beta_j + \nu_{it} + \alpha_i + \xi_t + \varepsilon_{it},
 \end{equation}
 
-where $\alpha_i$ and $\xi_t$ denote the unit- and time-specific fixed effects. This specification also allows for further interpretability. Model (\ref{explicit_model}) can be estimated via augmented versions of the methods proposed by both \citet{bai2009panel} and \citet{kneip2012new}. This is discussed in detail \citet{bai2009panel} and \citet{bada2012phtt}.
+where $\alpha_i$ and $\xi_t$ denote the unit- and time-specific fixed effects. Model (\ref{explicit_model}) can be estimated via augmented versions of the methods proposed by both \citet{bai2009panel} and \citet{kneip2012new}. This is discussed in detail in \citet{bai2009panel} and \citet{bada2012phtt}.
 
-\subsection{Factor modelling in economics}
 
-Model (\ref{model1}) can fit a wide range of economic phenomena where unobservables might be present as common factors. A few examples might elucidate the usefulness of the approach discussed in this paper.  
+\subsection{Factor Modelling in Economics}\label{factor_modeling}
 
-\paragraph{Macroeconomics} Let $y_{it}$ be the growth rate for a country $i$ in period $t$ and $x_{it}$ be a series of inputs, such as labour and capital. The factors $f_{lt}$ could represent common macroeconomic shocks such as technological change and financial crises, and the individual loading parameters $\lambda_{il}$ the heterogeneous impacts of such shocks to the countries' growth rates. 
+Factor models are a common occurrence in economics, and as such, model (\ref{model1}) can be fitted to describe a wide array of phenomena. In the remainder of this section, examples taken in large from \citet{bai2008large} and \citet{bai2009panel} in macroeconomics, microeconomics, and finance will be examined.
 
-\paragraph{Microeconomics} Consider a setup where $y_{it}$ represents the wage for individual.
+\paragraph{Macroeconomics} Let $y_{it}$ be, e.g., the \ac{GDP} level, or growth rate, of a country $i$ at time $t$ and $x_{it}$ denote observable covariates, such as capital stock and life expectancy at birth. Here, $f_l(t)$ represents common shocks $l = \{1, \ldots, d\}$, such as technological change and financial crises, while $\lambda_{il}$ displays the heterogeneous impact of the common shock $l$ on country $i$.  \citet{eberhardt2011econometrics} present a general empirical framework for cross-country growth and productivity analysis based on common factor modeling. Further, \citet{breitung2006dynamic} provide a survey of empirical applications of factor models in macroeconomics, which include forecasting, monetary policy analysis, and the study of international business cycles, while \citet{reichlin2002factor} presents an additional review of related works. 
 
-\section{Identification}\label{identification}
+\paragraph{Microeconomics} In earning studies, let $y_{it}$ symbolize the wage rate for an individual $i$ at age $t$. Further, let $x_{it}$ represent a set of observable characteristics, such as education level, work experience, gender, and ethnicity. Within this setting, $\lambda_{il}$ denotes unseen attributes or skills $l = \{1, \ldots, d\}$, such as persistence, motivation, and hard work, whereas $f_l(t)$ describes the time-varying price for intangible skill $l$. Building on this framework, \citet{carneiro2003estimating} employed factor models to analyze distributions of counterfactuals and the dynamic treatment effect of various observable and unobservable attributes on schooling decisions. Alternatively, \citet{bai2002determining} point to the usefulness of factor models for determining the rank of household's demand systems. 
 
-In the absence of any further constraints, the problem of the non-uniqueness of common factors leads to indeterminacy. This, and the ensuing normalizations, are easier understood when using matrix notation. Let $Y_i = (y_{i1}, \ldots, y_{iT})^\prime$, $X_i = (x_{i1}, \ldots, x_{iT})$, $F = (F_1,  \ldots, F_T)^\prime$,$ \lambda_i = (\lambda_{i 1}, \ldots, \lambda_{i d})^\prime$ and $\varepsilon_{i} = (\varepsilon_{i1}, \ldots, \varepsilon_{iT})^\prime$, with  $F_t = (f_1(t), \ldots, f_d(t))^\prime$. We then write the model as:
+\paragraph{Finance} Consider a model where $y_{it}$ denotes the return for an assest $i$ in period $t$. Here, $x_{it}$ denotes a set of relevant observable covariates, such as the risk-free interest rate, $f_l(t)$ denotes a systemic risk $l$ which fluctuates in $t$ and $\lambda_{il}$ denotes the exposure to factor risk $l$. In this vein, \citet{ludvigson2007empirical} examined the risk-return relation using factor analysis and found that additional factors provide essential information about future returns and volatility. In addition, \citet{anderson2007forecasting} develop multivariate factor models for forecasting stock volatility.
+
+
+
+\section{Estimation Methods}\label{estimation}
+
+In this section, I present a detailed discussion of the estimation methods proposed by \citet{kneip2012new}, \citet{bai2009panel} and \citet{bada2014parameter}. First, the intrinsic identification issues for factor modeling are examined, followed by the analysis of the estimators in question. Throughout this dissertation, notation will be maintained consistent; however, in alignment with the original methods, certain variations in notation will be adopted where appropriate.
+
+\subsection{Issues of Identificaction}\label{identification}
+
+In the absence of any further constraints, the problem of the non-uniqueness of common factors leads to indeterminacy. This, and the ensuing normalizations, are easier understood when writing the model in matrix form. Let $Y_i = (y_{i1}, \ldots, y_{iT})^\prime$, $X_i = (x_{i1}, \ldots, x_{iT})^{\prime}$, $F = (f_1,  \ldots, f_T)^\prime$,$ \lambda_i = (\lambda_{i 1}, \ldots, \lambda_{i d})^{\prime}$ and $\varepsilon_{i} = (\varepsilon_{i1}, \ldots, \varepsilon_{iT})^\prime$, with  $f_t = (f_1(t), \ldots, f_d(t))^\prime$. Model \cref{model1} can then be rewritten as:
 
 \begin{equation}\label{matrix_notation}
-    Y_i=X_i \beta+ F\lambda_i^\prime +\varepsilon_i
+    Y_i=X_i \beta+ F\lambda_i +\varepsilon_i
 \end{equation}
 
  
 
-Now, since, for any invertible  $d \times d$ matrix $A$, it holds that $ F A A^{-1} \lambda_i^\prime  =  F \lambda_i^\prime$, the model, with factors $FA$ and loading parameters $\lambda_i (A^{-1})^\prime$ is also true. Hence, factors are only identifiable up to linear transformations of the form presented above. Sine matrix $A$ has $d \times d$ free elements, we require $d^2$ restrictions on the model for identifiability. 
-
-
-Consider $\Lambda = (\lambda_1, \ldots, \lambda_n)^\prime$. The usual normalizations are then given by:   
+Now, since, for any invertible  $d \times d$ matrix $A$, it holds that $ F A A^{-1} \lambda_i =  F \lambda_i$, the model with factors $FA$ and loading parameters $A^{-1}\lambda_i $ is also true. Hence, factors are only identifiable up to linear transformations of the form presented above. Since matrix $A$ has $d \times d$ free elements, we require $d^2$ restrictions on the model for identifiability. Consider $\Lambda = (\lambda_1, \ldots, \lambda_n)^\prime$. The usual normalization (see, e.g. \citet{bai2008large}) are then given by:   
 
 \begin{enumerate}[label = (\alph*)]
-    \item $F^\prime F/T = I_d$ \label{cond_a}
-    \item $\Lambda^\prime \Lambda = \diag(\sum_{i=1}^n \lambda_{i1}^2, \ldots, \sum_{i=1}^n \lambda_{id}^2 ) $ \label{cond_b}
+    \item $F^\prime F/T = I_d$ \label{cond_a}, and
+    \item $\Lambda^\prime \Lambda = \diag(\sum_{i=1}^n \lambda_{i1}^2, \ldots, \sum_{i=1}^n \lambda_{id}^2 ) $ \label{cond_b}.
 \end{enumerate}
 
 
+Where the former equation yields $\frac{d(d+1)}{2}$ restrictions, and the latter provides the additional $\frac{d(d-1)}{2}$ restrictions. Conditions \ref{cond_a} and \ref{cond_b} ensure identifiability up to sign changes since, e.g. $-F$ and $-\Lambda$ also satisfy these restrictions. Clearly \ref{cond_a} implies that   \(\frac{1}{T} \sum_{t=1}^T f_{l t}^2=1 \) for all \( l \in\{1, \ldots, d\} \) and \(\sum_{t=1}^T f_{l t} f_{k t}=0 \) for all \( l, k \in\{1, \ldots, d\} \) with \( k \neq l \) while \ref{cond_b} requires $\sum_{i=1}^n \lambda_{i l} \lambda_{i k}=0$ for all  $l, k \in\{1, \ldots, d\} \text { with } k \neq l$. \citet{kneip2012new} further prescribe that the diagonal elements of \( \Lambda^\prime \Lambda \) are in decreasing order, that is: 
 
-Where the former yields $\frac{d(d+1)}{2}$ restrictions, and the latter provides the additional $\frac{d(d-1)}{2}$ restrictions. Conditions \ref{cond_a} and \ref{cond_b} ensure identifiability up to sign changes since, e.g. $-F$ and $-\lambda$ also satisfy these restrictions \citep{bai2009panel, kneip2012new}.
+\begin{enumerate}[label = (\alph*),resume]
+    \item \(\frac{1}{n} \sum_{i=1}^n \lambda_{i 1}^2 \geq \frac{1}{n} \sum_{i=1}^n \lambda_{i 2}^2 \geq \cdots \geq \frac{1}{n} \sum_{i=1}^n \lambda_{i d}^2 > 0\) \label{cond_c}
+\end{enumerate}
 
-The above normalizations lead to orthogonal vectors $F_t$ and empirically uncorrelated coefficients  $\lambda_{il}$. Further, under these restrictions, the problem of estimating factors $F_t$ becomes that of principal component analysis  \citep{kneip2012new}.
+This condition is useful for deriving the theoretical results of the model proposed in the referenced work, as outlined in \Cref{asymptotics}. The above normalizations result in orthogonal vectors \(f_t\) and ensure the coefficients \(\lambda_{il}\) are empirically uncorrelated. Notably, with these constraints in place, the task of estimating the factors \(f_t\) aligns closely with the problem of principal components. This will be discussed in further detail in \Cref{kss}.
 
 
-\section{Estimation}
 
-\subsection{Method by \citet{kneip2012new}}
-The estimation approach developed by \citet{kneip2012new} involves a two-step procedure. First, estimates for the common slopes  $\hat{\beta}_j$ and initial estimates for the time-varying individual effects $\tilde{v}_i(t)$ are obtained via least squares, where a roughness penalty $\kappa$ controls the smoothness of the latter. This first step of the estimation relies on the use of an auxiliary function $\vartheta_i(t)$ defined on the interval $[1,T]$, so that 
-$\hat{\vartheta}_i(t) := \tilde{v}_i(t)$.
+\subsection{The \acl{KSS} \citeyearpar{kneip2012new} method}\label{kss}
 
-Second, principal component analysis is used to estimate the common factors $f_l(t)$ and produce a final and more efficient estimate $\hat{v}_i(t)$ for the non-constant individual effects. 
+The estimation method developed by \ac{KSS} \citeyearpar{kneip2012new} uses smoothing splines to fit model (\ref{model1}). The idea behind this concept is to fit a data set using a function that reflects the main characteristics of the data but retains a certain level of smoothness \citep{eubank1999nonparametric, de2001practical}. To illustrate, consider (\ref{model1}) with $\nu_{it} = v_i(t)$. 
 
-In what follows, each step will be discussed in detail. 
+A standard metric for assessing the smoothness of functions $v_i(t)$ of class $C^m$ is $\sum_{i=1}^n \int_1^T \frac{1}{T} \left(v_i^{(m)}(s)\right)^2  \, d s$ where $v_i^{(m)}(t)$ denotes the $m$th derivative of $v_i(t)$, while the time-average residual sum-of-squares serves as a conventional measure of the goodness-of-fit to the data, $\sum_{i=1}^n \frac{1}{T} \sum_{t=1}^T\left(y_i-  \sum_{j=1}^P x_{itj} \beta_j - v_i(t)\right)^2 $. Hence, $\beta_j$ and $v_i(t)$ can be chosen to minimize a convex combination of the previous equations:
 
-\paragraph{Step 1:} For a given $\kappa >0 $, the unobserved paramters $\beta_j$ and $v_i(t)$ are estimated by the minimization of
+\begin{equation}\label{objective_convex}
+    (1- \alpha) \sum_{i=1}^n \frac{1}{T} \sum_{t=1}^T\left(y_i-  \sum_{j=1}^P x_{itj} \beta_j - v_i(t)\right)^2 + \alpha  \sum_{i=1}^n \int_1^T \frac{1}{T} \left(v_i^{(m)}(s)\right)^2  \, d s ,
+\end{equation}
+
+
+for $\alpha \in (0,1)$. Let $\kappa = \frac{\alpha}{1 - \alpha}$, then minimizing (\ref{objective_convex}) becomes equivalent to minimizing
+
+\begin{equation}\label{objective_kappa}
+    \sum_{i=1}^n \frac{1}{T} \sum_{t=1}^T\left(y_i-  \sum_{j=1}^P x_{itj} \beta_j - v_i(t)\right)^2 + \kappa \sum_{i=1}^n \int_1^T \frac{1}{T} \left(v_i^{(m)}(s)\right)^2  \, d s .
+\end{equation}
+
+Parameter $\kappa$ in (\ref{objective_kappa}) encompasses the tradeoff between the smoothness of functions $v_i(t)$ and the overall goodness of fit. As $\kappa$ becomes larger (i.e., $\alpha$ gets closer to 1), more weight is placed on smoothness, and parameters with large $m$th derivatives are penalized. Essentially, a greater $\kappa$ prioritizes smoothness over the data responsiveness of the method \citep{hastie2009elements, shalizi2016advanced}. In the limiting case $\kappa = \infty$ and $\alpha = 1$, the minimization of (\ref{objective_kappa}) yields a polynomial regression fit of the data of degree $m-1$ \citep{eubank1999nonparametric, de2001practical, kneip2012new}. For example, with $m=2$, one would simply obtain the least squares line \citep{wasserman2006all, shalizi2016advanced}.  
+
+Conversely, when $\kappa = \alpha = 0$, all weight is placed on the goodness of fit, and one obtains an estimate $\hat{v}_i(t)$ which interpolates the data. More precisely, of the infinite number of functions that interpolate the data, the estimator would choose the one with the lowest average $m$th derivative \citep{eubank1999nonparametric, wasserman2006all, shalizi2016advanced}. 
+
+
+
+\subsubsection{Estimation of slope parameters and time-varying individual effects}
+The \ac{KSS} method estimates $\beta_j$ and $v_i(t)$ via (\ref{objective_kappa}) through a two-step procedure. First, given a roughness penalty $\kappa$, estimates for the common slopes  $\hat{\beta}_j$ and initial estimates for the time-varying individual effects $\tilde{v}_i(t)$ are obtained via least squares. This first step of the estimation relies on the use of an auxiliary function $\vartheta_i(t)$ defined on the interval $[1,T]$, so that: 
+$\hat{\vartheta}_i(t) := \tilde{v}_i(t)$. Second, principal component analysis is used to estimate the common factors $f_l(t)$ and produce a final and more efficient estimate $\hat{v}_i(t)$ for the non-constant individual effects. In what follows, each step will be discussed in detail. 
+
+\paragraph{Step 1:} For a given $\kappa >0 $, the unobserved paramters $\beta_j$ and $v_i(t)$ are estimated by the minimization of:
 
 
 \begin{equation}\label{obj_kneip1}
-    \sum_{i=1}^n \frac{1}{T} \sum_{t=1}^T\left(y_{i t}-\sum_{j=1}^P x_{i t j} \beta_j-\vartheta_i(t)\right)^2+\sum_{i=1}^n \kappa \int_1^T \frac{1}{T}\left(\vartheta_i^{(m)}(s)\right)^2 d s
+    \sum_{i=1}^n \frac{1}{T} \sum_{t=1}^T\left(y_{i t}-\sum_{j=1}^P x_{i t j} \beta_j-\vartheta_i(t)\right)^2+\sum_{i=1}^n \kappa \int_1^T \frac{1}{T}\left(\vartheta_i^{(m)}(s)\right)^2 d s ,
 \end{equation}
 
-over all $\beta_j \in \R$ and all functions $\vartheta_i(t)$ of class $C^m$, where $\vartheta^{(m)}_i(t)$ denotes the $m$th derivative of $\vartheta_i(t)$. Spline theory implies that any solution $\hat{\vartheta}_i(t)$ has an expansion in terms of a natural spline basis $z_1(t), \ldots, z_T(t)$ of order $2m$ such that $\hat{\vartheta}_i(t) = \sum_{s=1}^T \hat{\zeta}_{is} z_s(t)$. For a treatment of spline theory and spline smoothing see e.g. \citet{eubank1999nonparametric}, \citet{wasserman2006all}.
-
-Using the model in matrix notation (\ref{matrix_notation}) and the expansion of the time-varying individual effects, we can rewrite the objective function in  (\ref{obj_kneip1}) as:
+over all $\beta_j \in \R$ and all functions $\vartheta_i(t)$ of class $C^m$, where $\vartheta^{(m)}_i(t)$ denotes the $m$th derivative of $\vartheta_i(t)$. Spline theory implies that any solution $\hat{\vartheta}_i(t)$ has an expansion in terms of a natural spline basis $z_1(t), \ldots, z_T(t)$ of order $2m$ such that $\hat{\vartheta}_i(t) = \sum_{s=1}^T \hat{\zeta}_{is} z_s(t)$. This translates into a piecewise polynomial of degree $2m - 1$ with $2m -2$ continuous derivatives, where the different segments of the polynomial are tied at $T$ different knots. The estimator is commonly implemented with a choice of $m = 2$, corresponding to cubic splines \citep{kneip2012new, bada2012phtt}. For a treatment of spline theory and spline smoothing, see, e.g., \citet{eubank1999nonparametric}, \citet{de2001practical} and \citet{wasserman2006all}. Using the notation in (\ref{matrix_notation}) and the natural spline basis expansion of the time-varying individual effects, the objective function in  (\ref{obj_kneip1}) can be rewritten as:
 
 \begin{equation}\label{matrix_objective}
-    S(\beta, \zeta)=\sum_{i=1}^n\left(\left\|Y_i-X_i \beta-Z \zeta_i\right\|^2+\kappa \zeta_i^{\prime} R \zeta_i\right)
+    S(\beta, \zeta)=\sum_{i=1}^n\left(\left\|Y_i-X_i \beta-Z \zeta_i\right\|^2+\kappa \zeta_i^{\prime} R \zeta_i\right) .
 \end{equation}
 
-here $\zeta_i = (\zeta_{i1}, \ldots, \zeta_{iT})^\prime$, $Z$ and $R$ are $T \times T$ matrices with elements $\{z_s(t)\}_{s,t = 1, \ldots, T}$ and $\{\int z_s^{(m)}(t)z_k^{(m)}(t), dt\}_{s,k=1, \ldots, T}$ respectively. Further, $\| \cdot\|$ denotes the eculidean norm in $\R^T$.   Estimators $\hat{\beta}, \hat{\zeta}_i$ and $\tilde{v}_i$ are hence obtained by minimizing (\ref{matrix_objective}) over all $\beta \in \R^\rho$ and $\zeta \in \R^{T \times n}$. With  $\mathcal{Z}_\kappa=Z\left(Z^{\prime} Z+\kappa R\right)^{-1} Z^{\prime}$, the solutions are given by: 
+Here $\zeta_i = (\zeta_{i1}, \ldots, \zeta_{iT})^\prime$, $Z$ and $R$ are $T \times T$ matrices with elements $\{z_s(t)\}_{s,t = 1, \ldots, T}$ and $\{\int z_s^{(m)}(t)z_k^{(m)}(t), dt\}_{s,k=1, \ldots, T}$ respectively. Further, $\| \cdot\|$ denotes the eculidean norm in $\R^T$.   Estimators $\hat{\beta}, \hat{\zeta}_i$ and $\tilde{v}_i$ are obtained by minimizing (\ref{matrix_objective}) over all $\beta \in \R^P$ and $\zeta \in \R^{T \times n}$. The solutions are given by:
+\begin{align}
+    \hat{\beta} &= \left(\sum_{i=1}^n X_i^{\prime}\left(I-\mathcal{Z}_\kappa\right)X_i\right)^{-1}\left(\sum_{i=1}^n X_i^{\prime}\left(I-\mathcal{Z}_\kappa\right) Y_i\right), \label{eq:beta} \\
+    \hat{\zeta}_i &= \left(Z^{\prime} Z+\kappa R\right)^{-1} Z^{\prime}\left(Y_i-X_i \hat{\beta}\right), \, \text{and}\label{eq:zeta} \\
+    \tilde{v}_i &= \mathcal{Z}_\kappa\left(Y_i-X_i \hat{\beta}\right) \label{eq:v},
+\end{align}
+where $\mathcal{Z}_\kappa=Z\left(Z^{\prime} Z+\kappa R\right)^{-1} Z^{\prime}$ denotes the smoothing matrix. Details regarding the derivation procedure are outlined in \citet{eubank1999nonparametric}, \citet{wasserman2006all}, and \citet{shalizi2016advanced}. Additionally, insights on the common slope parameters are provided in \citet{hardle2000partially}.
 
+Notice that (\ref{eq:zeta}) is akin to ridge regression. In fact, smoothing splines can be interpreted as a generalized form of this approach. As in the ridge regression method, the term $\kappa R$ in $\mathcal{Z}_\kappa$ shrinks the coefficients, resulting in a smoother fit \citep{eubank1999nonparametric, hastie2009elements}. With $\kappa = 0$, $\mathcal{Z}_\kappa$ becomes a standard linear projection matrix; accordingly, a regression of $Y_i - X_i\hat{\beta}$ on $Z$ would yield a least squares coefficient $\hat{\zeta}_i$ and fitted values that interpolate the data \citep{wasserman2006all}. Additionally, the term $( I - \mathcal{Z}_\kappa)$ in (\ref{eq:beta}) mirrors an orthogonal projection matrix, although it is not identical to one since it is not idempotent. As previously discussed, setting $\kappa = 0$ reverts to problem to least squares, and hence $( I - \mathcal{Z}_\kappa)$ would indeed be an orthogonal porjection of  $(Y_i - X_i\hat{\beta})$ onto $Z$. 
+
+
+
+\paragraph{Step 2:}\label{step2} Under assumptions \ref{cond_a} and \ref{cond_b}, the common factors are obtained as the principal components\footnote{For details regarding principal component analysis and its relationship to factor models, see \citet{shalizi2016advanced} and \citet{hansen2022econometrics}.} of the sample $\tilde{v}_1, \ldots, \tilde{v}_n$, with $\tilde{v}_i = (\tilde{v}_i(1), \ldots, \tilde{v}_i(T))^\prime$. The idea is to project $\tilde{v_i}$ into the $d$-dimensional linear subspace of $\mathbb{R}^T$ that best approximates it. To be more specific, the idea is to minimize:
 \begin{equation}
-    \begin{aligned}
-& \hat{\beta}=\left(\sum_{i=1}^n X_i^{\prime}\left(I-\mathcal{Z}_\kappa\right) X_i\right)^{-1}\left(\sum_{i=1}^n X_i^{\prime}\left(I-\mathcal{Z}_\kappa\right) Y_i\right) \\
-& \hat{\zeta}_i=\left(Z^{\prime} Z+\kappa R\right)^{-1} Z^{\prime}\left(Y_i-X_i \hat{\beta}\right), \text { and } \\
-& \tilde{v}_i=\mathcal{Z}_\kappa\left(Y_i-X_i \hat{\beta}\right),
+     \sum_{i=1}^n \sum_{t=1}^T \left(\tilde{v}_i(t) -\sum_{l=1}^d \lambda_{il}f_l(t) \right)^2,
+\end{equation}
+with respect to $f_l(t)$ , for all $l \in\{1, \ldots, d\}, t \in t = \{ 1, \ldots T\}$ \citep{rao1958some, stock2002forecasting, bai2009panel}. This can be shown to be equivalent to maximizing the variance of the projections \citep{shalizi2016advanced}.  The estimates for the common factors are then given by the first $d$ eigenvectors of the empirical covariance matrix of $\tilde{v}_1, \ldots, \tilde{v}_n$:
+\begin{equation}\label{empirical_covar}
+    \hat{\Sigma} = \frac{1}{n} \sum_{i=1}^n \tilde{v}_i \tilde{v}_i^\prime.
+\end{equation}
+More precisely, let $\hat{\gamma}_1, \ldots, \hat{\gamma}_d$ be the eigenvectors of $\hat{\Sigma}$ corresponding to the first $d$ eigenvalues eigenvalues $\hat{\varrho}_1 \geq \ldots \geq \hat{\varrho}_d$. The estimate for the common factor $f_l(t)$ for all $l \in\{1, \ldots, d\}, t \in \{t = 1, \ldots T\}$ is then given by: 
+\begin{equation}\label{hat_f}
+    \hat{f}_l(t) = \sqrt{T} \hat{\gamma}_{lt},
+\end{equation}
+where $\hat{\gamma}_{lt}$ is the $t$th element of the eigenvector $\hat{\gamma}_l$. The scaling factor $\sqrt{T}$ yields that (\ref{hat_f}) fullfils condition \ref{cond_a} in \Cref{identification}. The estimates $\hat{\lambda}_{il}$ for the individual loading parameters are obtained via least squares of $(Y_i - X_i \hat{\beta})$ on $\hat{f}_l = (\hat{f}_l(1), \ldots, \hat{f}_l(T))^\prime$, which yields:
+\begin{equation}
+\begin{aligned}
+    \hat{\lambda}_{i l} & = \left(\hat{f}_l^\prime \,\hat{f}_l \right)^{-1} \hat{f}_l^{\prime}\left(Y_i-X_i \hat{\beta}\right) \\
+    & = \frac{1}{T} \hat{f}_l^{\prime}\left(Y_i-X_i \hat{\beta}\right) ,
 \end{aligned}
 \end{equation}
+where the second equality follows from condition \ref{cond_a}. A vital step for the method advanced by \citet{kneip2012new} consists of re-estimating the time-varying individual effects $v_i(t)$ in Step 2 as $\hat{v}_i(t) := \sum_{l=1}^d \hat{\lambda}_{il}  \hat{f}_l(t) $, where a suitable dimensionality criterion determines the factor dimension $d$. This part of the procedure leads to more efficiently estimated time-varying individual effects \citep{bada2012phtt}. 
 
-\paragraph{Step 2:}\label{step2} The common factors are obtained as the principal components of the sample $\tilde{v}_1, \ldots, \tilde{v}_n$. More precisely, let  
+\subsubsection{Estimation of the smoothing parameter $\mathbf{\kappa}$}
 
-\begin{equation}\label{empirical_covar}
-    \hat{\Sigma} = \frac{1}{n} \sum_{i=1}^n \tilde{v}_i \tilde{v}_i^\prime
+\citet{kneip2012new} propose estimating the optimal smoothing parameter $\kappa_{\text{opt}}$ from the data via a \textit{leave one out} \ac{CV} criterion. For a given dimension $d$, and $i = \{1, \ldots, n\}$ let $\hat{\beta}_{-i}$, and $\hat{f}_{-i, l}$ denote the estimates of $\beta$ and $f_l$ obtained from the panel without the $i$th observation. Further, let $\hat{\lambda}_{-i, l}$ be the estimates of $\lambda_{il}$ obtained using $\hat{\beta}_{-i}$, and $\hat{f}_{-i, l}$. Notice that all of these estimates depend on $\kappa$. Hence, $\kappa_{\text{opt}}$ can be determined by minimizing: 
+\begin{equation}\label{cv_kniep}
+    C V(\kappa)=\sum_{i=1}^n\left\|Y_i-X_i \hat{\beta}_{-i}-\sum_{l=1}^d \hat{\lambda}_{-i, l} \hat{f}_{-i, l}\right\|^2,
 \end{equation}
+with respect to $\kappa$. However, this procedure is computationally costly and requires the dimension $d$ to be known a priori. To overcome this issue, \citet{bada2012phtt} propose a different approach that relies on the use of \ac{GCV}. The procedure optimizes (\ref{matrix_objective}) by updating the parameters in a functional hierarchy. Formally, the iteration algorithm can be described as follows:
+\begin{enumerate}
+    \item Holding $\kappa$ and $\beta$ constant, (\ref{matrix_objective}) is optimized with respect to $\zeta_i$. This yields:
 
-denote the empirical covariance matrix of $\tilde{v}_1, \ldots, \tilde{v}_n$. Let $\hat{\rho}_1 \geq,  \ldots, \geq \hat{\rho}_T$ and $\hat{\gamma}_1, \dots, \hat{\gamma}_T$ denote the eigenvalues and corresponding eigenvectors of (\ref{empirical_covar}). Then, the estimator of the common factor $f_l(t)$ is given by the $l$th scaled eigenvector
+    \begin{equation}\label{zeta_liebl}
+        \hat{\zeta}_i=\left(Z^{\prime} Z+\kappa R\right)^{-1} Z^{\prime}\left(Y_i-X_i \beta\right) .
+    \end{equation}
+    \item Plugging the results form (\ref{zeta_liebl}) into (\ref{matrix_objective}) and minimizing with respect to $\beta$ for a given $\kappa$ provides an estimate for the slope parameter, given by:
 
-\begin{equation}\label{hat_f}
-    \hat{f}_l(t) = \sqrt{T} \hat{\gamma}_{lt}, \, \text{for all} \, l = \{1, \ldots, d\}, t = \{t = 1, \ldots T\}
+    \begin{equation}\label{beta_liebl}
+        \hat{\beta}=\left(\sum_{i=1}^n X_i^{\prime} X_i\right)^{-1}\left(\sum_{i=1}^n X_i^{\prime}\left(Y_i-Z \hat{\zeta}_i\right)\right) .
+    \end{equation}
+    \item Finally, using the estimates from (\ref{zeta_liebl}) and (\ref{beta_liebl}) an estimate for the smoothing parameter $\kappa$ is obtained via following a \ac{GCV} criterion by minimizing:
+
+    \begin{equation}\label{liebl_algo}
+        \kappa_{\text{GCV}}=\arg \min _\kappa \frac{1}{\frac{n}{T} \operatorname{tr}\left(I-\mathcal{Z}_\kappa\right)^2} \sum_{i=1}^n\left\|Y_i-X_i \hat{\beta}-\mathcal{Z}_\kappa\left(Y_i-X_i \hat{\beta}\right)\right\|^2 .
+    \end{equation}
+    
+\end{enumerate}
+The estimation procedure relies on initial estimates for $\beta$ and $\kappa$ and proceeds with the aforementioned steps until all parameters converge. The staring value $\hat{\beta}_{\text{start}}$ is defined in (\ref{eq:beta_start}), while $\kappa_{\text{start}}$ is obtained as the \ac{GCV}-smoothing parameter of the residuals $Y_i - X_i\hat{\beta}_{\text{start}} $. Whereas this procedure is computationally superior to the former and can be easily implemented in existing statistical software, the smoothing parameter $\kappa_{\text{GCV}}$ does not explicitly account for the factor structure of $v_i(t)$. This implies that the optimal smoothing parameter $\kappa_{\text{opt}}$ obtained from (\ref{cv_kniep}) will be smaller than $ \kappa_{\text{GCV}}$. This is discussed in further detail in \citet{bada2012phtt}.
+ 
+\subsection{The method by \citet{bai2009panel} and it's Extension by \citet{bada2014parameter}}
+
+ A vital aspect of the methods by \citet{bai2009panel}, and others derived from it, is that the common factors are assumed to be stochastically bounded. Specifically, \citet{bai2009panel} permits only those factors that follow a deterministic time trend or follow stationary dynamic processes. On the other hand, \citet{bada2014parameter} accommodates non-stationary factors, allowing for an order of integration $I(p)$ where $p \leq 1$. This will be discussed in further detail in \Cref{asymptotics}. Nonetheless, this caveat warrants a restatement of condition \ref{cond_a} in \Cref{identification}.  In the  augmented version of the method by \cite{bai2009panel}, \citet{bada2014parameter} introduce the following modification: 
+\begin{enumerate}[label = (\alph*$^\prime$)]
+    \item $F^\prime F/T^\delta = I_d$ ,
+\end{enumerate}
+where $\delta$ is set to one if the factors are stationary and two if they are $I(1)$ (see \citet{bai2004estimating}). To streamline the notation used throughout the paper, I henceforth set $\delta = 1$. In what follows, methods proposed by   \citet{bai2009panel} and \citet{bada2014parameter}  will be discussed.
+
+
+
+\subsubsection{The method by \citet{bai2009panel}}
+
+The method developed by \citet{bai2009panel} more closely mirrors conventional estimation techniques extensively employed in econometrics. The author proposes to estimate parameters $\beta, F$ and $\lambda_i$ in model (\ref{matrix_notation})  by minimizing the least squares objective function defined as:
+\begin{equation}\label{obj.fn.bai}
+    S\left(\beta, F, \lambda_i\right)=\sum_{i=1}^n\left\|Y_i-X_i \beta-F \lambda_i^{\prime}\right\|^2 ,
 \end{equation}
-
-where $\hat{\gamma}_{lt}$ is the $t$th element of the eigenvector $\hat{\gamma}_l$. The scaling factor $\sqrt{T}$ yields that (\ref{hat_f}) fullfils condition \ref{cond_a} in \Cref{identification}. The estimates $\hat{\lambda}_{il}$ for the individual loading paramters are obtianed via least squares of $(Y_i - X_i \hat{\beta})$ on $\hat{f}_l = (\hat{f}_l(1), \ldots, \hat{f}_l(T))^\prime$.
-
-A crucial part of the method proposed by \citet{kneip2012new} involves re-estimating the time-varying individual effects $v_i(t)$ in Step 2 by $\hat{v}_i(t) := \sum_{l=1}^d \hat{\lambda}_{il}  \hat{f}_l(t) $, where the factor dimension $d$ is determined by a  stuiable dimensionality criterion. 
-6
-\subsection{Method by \citet{bai2009panel}}
-\citet{bai2009panel} proposes to estimate parameters $\beta, F$ and $\lambda_i$ in model (\ref{matrix_notation}), given a known factor dimension $d$,  by minimizing the least squares objective function defined as:
-
+subject to conditions \ref{cond_a} and \ref{cond_b} in \Cref{identification}. Importantly, it is assumed that the factor dimension $d$ is known a priori. Given common factors $F$, the \ac{ols} estimator for $\beta$ is given by:
 \begin{equation}
-    S\left(\beta, F, \lambda_i\right)=\sum_{i=1}^n\left\|Y_i-X_i \beta-F \lambda_i^{\prime}\right\|^2
+    \hat{\beta}(F)=\left(\sum_{i=1}^n X_i^{\prime} \mathcal{M}_F X_i\right)^{-1}\left(\sum_{i=1}^n X_i^{\prime} \mathcal{M}_F Y_i\right) ,
 \end{equation}
-
-subject to conditions \ref{cond_a} and $\ref{cond_b}$ in \Cref{identification}. Given the projection matrix $\mathcal{P}_d = I_T - F(F^\prime F)^{-1}F^\prime = I_T - FF^\prime/T$, the least square estimator for $\beta$, given $F$ is given by:
-
+where $\mathcal{M}_F$ is an orthogonal projection matrix and is defined as:
 \begin{equation}
-    \hat{\beta}(F)=\left(\sum_{i=1}^n X_i^{\prime} \mathcal{P}_d X_i\right)^{-1}\left(\sum_{i=1}^n X_i^{\prime} \mathcal{P}_d Y_i\right)
+    \mathcal{M}_F  =  I_T - F(F^\prime F)^{-1}F^\prime = I_T - FF^\prime/T .
 \end{equation}
-
-Now, given $\beta$, an estimator for $F$ is given, once again by the first $d$ eigenvectors $\hat{\gamma} = (\hat{\gamma}_1, \ldots, \hat{\gamma}_d)$  of the empirical covariance matrix $\hat{\Sigma} = (nT)^{-1}w_i w_i^\prime$, where $w_i = Y_i - X_i \beta$. More concretely:
-
+The purpose of \(\mathcal{M}_F\) is to isolate the impact of the common factors, permitting the estimation of the slope parameter while keeping \(F\) constant. Drawing a parallel to the \ac{KSS} approach, an estimator for $F$ can be found using principal components of the sample $w_1, \ldots, w_n$, where $w_i = Y_i - X_i \beta$ has a pure factor structure given $\beta$, i.e., it can be entirely represented by common factors $F$ and individual loading parameters $\lambda_i$. The estimator for $F$ with $\beta$ held fixed is then given by:
+ \begin{equation}
+    \hat{F}(\beta) = \sqrt{T}\hat{\gamma},
+\end{equation}
+where $\hat{\gamma} = (\hat{\gamma}_1, \ldots, \hat{\gamma}_d)$ is a matrix containing the  first $d$ eigenvectors of the empirical covariance matrix\footnote{Notice that, unlike the term in  (\ref{empirical_covar}. This is simply due to differing conventions and does not influence the results of the common factor estimation.}:
+  \begin{equation}\label{eq:covar2}
+    \hat{\Sigma} = \frac{1}{nT} \sum_{i=1}^nw_i w_i^\prime .
+\end{equation}
+Given some initial values for the parameters, the solutions for $\hat{\beta}$ and $\hat{F}$ can then be obtained via iteration. Further, estimates for the individual loading parameters can then be obtained by regressing $\hat{w}_i = Y_i - X_i\hat{\beta}$ on $\hat{F}$, which yields:
 \begin{equation}
-    \hat{F}(\beta) = \sqrt{T}\hat{\gamma}
+    \hat{\lambda}_i = \frac{1}{T}\hat{F}^{\prime}(Y_i - X_i \hat{\beta}).
 \end{equation}
+Since the factor dimension $d$ is usually unknown, the estimation procedure relies on initially setting an arbitrarily large $d_{\text{max}} > d$ and subsequently estimating $d$ via a suitable dimensionality criterion. However, this approach may result in inefficient estimation and incorrect interpretation of \(\beta\) due to the complexity of having too many parameters \citep{bada2012phtt}. To solve this issue, \citet{bada2014parameter} propose augmenting the method by \citet{bai2009panel} to enable the parallel estimation of $\beta, F, \lambda_i$ and the factor dimension $d$.
 
-The solution for $\hat{\beta}$ and $\hat{F}$ can then be obtained via iteration. Estimates for the individual loading parameters can then be obtained as follows:
+\subsubsection{The \acl{Eup} method by \citet{bada2014parameter}}
 
+\citet{bada2014parameter} achieve simultaneous estimation of the relevant parameters by incorporating a penalty term \(lg_{nT}\) into the objective function (\ref{obj.fn.bai}),  which picks up the estimated factor dimension $\hat{d}$:
+\begin{equation}\label{eup.obj.fn}
+    S\left(\beta, F, \lambda_i, l\right)=\sum_{i=1}^n\left\|Y_i-X_i \beta-F \lambda_i^{\prime}\right\|^2+l g_{n T} .
+\end{equation}
+Here, $g_{nT}$ depends on the dimensions of the panel data set $n, T$ and can be chosen according to \citet{bai2002determining} and \citet{bai2004estimating} (\Cref{dimension}). The estimation procedure follows the parameter-cascading strategy of \citet{cao2010linear}, which is suited to models with multilayered parameter structures, such as that proposed by \citet{bai2009panel}.  The idea behind this concept is to choose different optimization criteria for each parameter layer and to let the sequential optimization of these criteria induce relationships between the various parameters at different layers. Formally, the estimation procedure is carried out as follows:
+
+\paragraph{Step 1:} An estimate for the individual loading parameters $\hat{\lambda}_i$ is obtained by minimizing (\ref{eup.obj.fn}) with respect to $\lambda_i$, given $\beta, F$ and $d$:
+\begin{equation}\label{eq:lambda_i}
+    \hat{\lambda}_i(\beta, F, d)=\frac{1}{T}F^{\prime}\left(Y_i-X_i \beta\right)  .
+\end{equation}
+\paragraph{Step 2:}  $\hat{F}$ is obtained by substituting (\ref{eq:lambda_i}) in (\ref{eup.obj.fn}) and minimizing with respect to $F$ for each given $\beta$ and $d$. Once again, the problem of estimating the common factors becomes that of principal components, and the estimate is given by the first $d$ eigenvectors $\hat{\gamma}(\beta, d)$  of the empirical covariance matrix\footnote{Idem.} $\hat{\Sigma} = \frac{1}{nT} \sum_{i=1}^n w_i w_i^\prime$, where $w_i = Y_i - X_i \beta$. More properly: 
+\begin{equation}\label{eq:F_hat}
+    \hat{F}(\beta, d)=\sqrt{T} \hat{\gamma}(\beta, d) .
+\end{equation}
+\paragraph{Step 3:} The slope parameters are estimated by substituting (\ref{eq:lambda_i}) and (\ref{eq:F_hat}) into (\ref{eup.obj.fn}) and minimizing the objective function with respect to $\beta$ for each given $d$. The estimate is then given by:
+\begin{equation}\label{eq:b_hat}
+    \hat{\beta}(d)=\left(\sum_{i=1}^n X_i^{\prime} X_i\right)^{-1}\left(\sum_{i=1}^n X_i^{\prime}\left(Y_i-\hat{F} \hat{\lambda}_i(\hat{\beta}, d)\right)\right) .
+\end{equation}
+\paragraph{Step 4:} Finally, optimizing (\ref{eup.obj.fn}) with respect to $l$ given estimates (\ref{eq:lambda_i}), (\ref{eq:F_hat}) and (\ref{eq:b_hat}) yields an estimate for the factor dimension: 
 \begin{equation}
-    \hat{\lambda_i} = \frac{1}{T} \hat{F}^\prime (Y_i - X_i \hat{\beta}) 
+    \hat{d}=\arg \min_l \sum_{i=1}^n\left\|Y_i-X_i \hat{\beta}-\hat{F} \hat{\lambda}_i\right\|^2+l g_{n T}, \quad \text{for all} \quad l \in\left\{0,1, \ldots, d_{\max }\right\} .
+\end{equation} 
+The final set of estimators is derived through a process of alternation between two stages: an inner iteration, where \(\hat{\beta}(d), \hat{F}(d)\), and \(\hat{\lambda}_i(d)\) are optimized for each specific value of \(d\), and an outer iteration, where the dimension \(\hat{d}\) is selected. This updating cycle continues to be repeated in full until all the parameters reach convergence. This comprehensive updating procedure is why the estimators are referred to as \acl{Eup}.
+
+Since the objective functions described in (\ref{obj.fn.bai}) and (\ref{eup.obj.fn}) are not globally convex, there is no guarantee that the iteration algorithm will converge to the global optimum. Hence, a key part of the procedure involves selecting appropriate starting values for $\hat{d}_{\text {start }}$ and $\hat{\beta}_{\text {start }}$. \citet{bada2014parameter} propose selecting an arbitrarily large $\hat{d}_{\text{max}}$ and start the iteration with  the following estimate for the slope coefficients: 
+\begin{equation}\label{eq:beta_start}
+    \hat{\beta}_{\text {start }}=\left(\sum_{i=1}^n X_i^{\prime}\left(I-G G^{\prime}\right) X_i\right)^{-1}\left(\sum_{i=1}^n X_i^{\prime}\left(I-G G^{\prime}\right) Y_i\right),
 \end{equation}
+where $G$ is the $T \times d_{\max }$ matrix of the eigenvectors $G_1, \ldots, G_{d_{\max }}$ of the augmented covariance matrix:
+\begin{equation}\label{eq:aug}
+    \Gamma^{\text {Aug }}=\frac{1}{n T} \sum_{i=1}^n\left(Y_i, X_i\right)\left(Y_i, X_i\right)^{\prime}.
+\end{equation}
+The idea behind these starting estimates relies on the fact that the true unobserved factors $F$ cannot escape from the space spanned by the eigenvectors of (\ref{eq:aug}). This is because the unobserved factors \( F \) are necessarily contained in $Y_i$ and $X_i$ in the case of endogenous regressors. The orthogonal projection of $X_i$ on $G$ in (\ref{eq:beta_start}) then eliminates the effect of a possible correlation between the observed regressors $X_i$ and the unobserved factors $F$, which would otherwise divert $\hat{\beta}_{\text {start }}$ from the true value $\beta$. However, if the observed regressors are highly correlated with the common factors (\ref{eq:beta_start})  will be close to zero, and the iteration algorithm can converge to a non-significant estimate of $\beta$. To fix this, \citet{bada2014parameter} propose to under-scale the starting common factors $G_l$ that are highly correlated with $X_i$.
 
 
-\citet{bada2014parameter} propose agumenting the method by \citet{bai2009panel} 
 
 
+\section{Asymptotic Theory}\label{asymptotics}
 
-\section{Asymptotics}
+This section concisely discusses asymptotics for the estimators proposed by \citet{kneip2012new} and \citet{bai2009panel}. General theoretical results are also presented for the \ac{Eup} estimator, albeit a thorough examination of these is beyond the scope of this dissertation. Suffice it to say that this choice is based on the fact that the asymptotic distributions of the estimators by \citet{bai2009panel} and \citet{bada2014parameter} turn out to be identical.  
+\subsection{The \acs{KSS} Estimator}
+
+\citet{kneip2012new} derive the asymptotic properties of the \ac{KSS} estimator for cubic smoothing splines i.e. $m = 2$ (see \Cref{kss}). The results don't rely on any conditions relating to the quotient $\frac{T}{n}$, unlike the estimators derived from the model proposed by \citet{bai2009panel} (\Cref{bai}). The following assumptions provide the basis for the asymptotic theory results developed by \citet{kneip2012new}.
+
+\subsubsection{Assumptions}
+
 
 \newtheorem{assumption}{Assumption}
 
-\begin{assumption}
-    For some fixed $d \in \{0,1,2,  \ldots\}, d < T$ there exists an $D$- dimensional subspace $\mathcal{D}_T$ of $\R^T$ such that $v_i \in \mathcal{D}_T$ holds with probability 1. 
+\begin{assumption}\label{kss_asumption_1}
+    For some fixed $d \in \{0,1,2,  \ldots\}, d < T$ there exists an $d$-dimensional subspace $\mathcal{D}_T$ of $\R^T$ such that $v_i = (v_i(1), \ldots, v_i(T))^\prime \in \mathcal{D}_T$ holds with probability 1. 
 \end{assumption}
 
-\begin{assumption}
+Altough subspace $\mathcal{D}_T$ and the factor dimension $d$ are unknown, assumption \ref{kss_asumption_1} implies that $v_i$ can be paramterized in terms of common factors $f_1, ..., f_T$ with $f_t = (f_1(t), \ldots, f_d(t))^\prime$ and corresponding individual loading coefficients, so that $v_i(t)  = \sum_l^d \lambda_{il} f_l(t)$. The factor dimension $d$ is to be estimated along with the rest of the model's parameters. The procedures for doing so are examined in \Cref{dimension}. 
+
+
+
+
+\begin{assumption}\label{assumption_kss2}
     There exist a nondecreasing function $c(T)$ of $T$ such that for all $l,k = 1, \ldots, d, l \neq k$:
-        \begin{enumerate}
-            \item $E( \frac{1}{T} \sum_{t=1}^T v_i(t)^2) = O(c(T))$,
-            \item $\frac{1}{n} \sum_{i=1}^n \lambda_{il}^2 = O_P(c(T))$
-            \item $c(T) = 0_P (\sum_{i=1}^n \lambda_{il}^2)$
-            \item $\sum_{i=1}^n \lambda_{il}^2 = O_P(c(T)^2)$
-            \item $c(T) = O_P( |\sum_{i=1}^n \lambda_{il}^2 - \sum_{i=k}^n \lambda_{il}^2|) $
+        \begin{enumerate}[label = (\roman*)]
+            \item $E( \frac{1}{T} \sum_{t=1}^T v_i(t)^2) = O(c(T))$, \label{part1}
+            \item $\frac{1}{n} \sum_{i=1}^n \lambda_{il}^2 = O_P(c(T))$, \label{part2}
+            \item $c(T) = O_P (\frac{1}{n} \sum_{i=1}^n  \lambda_{il}^2)$, \label{part3}
+            \item $\frac{1}{n} \sum_{i=1}^n \lambda_{il}^4 = O_P(c(T)^2)$, and \label{part4}
+            \item $c(T) = O_P( |\frac{1}{n}\sum_{i=1}^n \lambda_{il}^2 - \frac{1}{n}\sum_{i=1}^n \lambda_{ik}^2|) $. \label{part5}
             
         \end{enumerate}
     \end{assumption}
 
-    \begin{assumption}
+    This assumption provides conditions that bind the asymptotic behavior of the non-constant individual effects and the individual loading parameters. Recall that whenever the regressor matrix includes an intercept, \( v_i(t) \) is centered around zero. Consequently, part \ref{part1} provides an upper bound on the time-variance of the time-varying individual effects.  
+    
+    Parts \ref{part2} and \ref{part3} of assumption \ref{assumption_kss2} jointly imply that each component $\frac{1}{n} \sum_{i=1}^n \lambda_{il}^2$ must increase at a rate exactly equal to $c(T)$. \citet{kneip2012new} state that this is equivalent to saying that the growth rate of the error of approximating \(v_i\) using a model with \(d' < d\) is also \(c(T)\).  Moreover, \ref{part4} places an upper bound on the fourth moment of the individual loading parameters.
+
+
+   Lastly, part \ref{part4} refines the constraints on the growth of function \(c(T)\). Given that for any \(k > l\), we have \(\frac{1}{n}\sum_{i=1}^n \lambda_{il}^2 > \frac{1}{n}\sum_{i=1}^n \lambda_{ik}^2\) (see condition \ref{cond_c} in \Cref{identification}), the difference \(|\frac{1}{n}\sum_{i=1}^n \lambda_{il}^2 - \frac{1}{n}\sum_{i=1}^n \lambda_{ik}^2|\) establishes an upper boundary for \(c(T)\). This boundary is contingent on the rate at which \(\frac{1}{n}\sum_{i=1}^n \lambda_{il}^2\) diminishes with increasing values of \(l\).
+    \begin{assumption}\label{assumption_differencing}
         There exists a nonincreasing function $b(T)$ sucht that as $n, T \to \infty$, the second-order differences of $v_i(t)$ satisfy:
 
-        $$ E \left( \frac{1}{T} \sum_{t=2}^{T-1} v_i(t-1) - 2v_i(t) + v_i(t+1)^2 \right) = O(b(T))$$
+        $$ E \left( \frac{1}{T} \sum_{t=2}^{T-1} \left(v_i(t-1) - 2v_i(t) + v_i(t+1) \right)^2 \right) = O(b(T))$$.
     \end{assumption}
+     Assumption \ref{assumption_differencing} establishes an upper bound on the curvature of the time-varying individual effects \( v_i(t) \), using the function \( b(T) \) as the controlling factor. This is because second-order differences are the discrete analog to the continuous idea of a second derivative. Clearly, by assumption \ref{kss_asumption_1}, the smoothness of $v_i(t)$ mirrors that of the common factors $f_t$. \citet{kneip2012new} further show that the value of $b(T)$ determines the bias of the smoothing spline estimator for any $\kappa$, and serves itself as a measure of smoothnes. The reader is referred to the cited work for a full examination of the subject. 
+    \begin{assumption}\label{assumption_X}
+    \begin{enumerate} [label = (\roman*)] The following conditions are satisfied: 
+        \item There exists a nondecreasing function $d(T) \leq c(T)$ with $d(T) = o(T)$ such that $ E(\frac{1}{T} \sum x_{itj}^2) = O(d(T))$ holds for all $j = 1, \ldots, P$ as $n, T \to \infty$.\label{first}
+        \item  Let $\varrho_{\text{max}}(A)$ denote the maximal eigenvalue of a matrix $A$. Then, there is a constant $C_0 < \infty$ such that for all $\kappa \geq 1$:
+        $$ E \left( \varrho_{\max} \left( \left[ \sum_{i=1}^n ( X_i ^\prime (I - \mathcal{Z}_k) X_i \right]^{-1} \right) \right) \leq C_0 \frac{1}{nT} . $$ \label{second}
 
-    \begin{assumption}
-        There exists a nondecreasing function $d(T) \leq c(T)$ with $d(T) = o(T)$ such that $n, T \to \infty E(\frac{1}{T} \sum x_{itj}^2 = O(d(T))$ holds for all $j = 1, \ldots, \rho$. Furthermore, there is a constant $C_0 < \infty$ such that for all $\kappa \geq 1$:
+        
+        \item There exists a constant $C_1<\infty$ such that for all $j=1, \ldots, p$ and all vectors $a \in \mathbb{R}^T$
+        $$
+        a^{\prime}\left(I-\mathcal{Z}_\kappa\right) \cdot E\left(x_{ij}x_{ij}^{\prime} \mid \mathcal{D}_T\right)\left(I-\mathcal{Z}_\kappa\right) a \leq C_1 \cdot\left\|\left(I-\mathcal{Z}_\kappa\right) a\right\|^2,
+        $$
 
-        $$ E \left( \kappa_{\max} \left( \left[ \sum_{i=1}^n ( X_i ^\prime (I - \mathcal{Z}_k) X_i \right]^{-1} \right) \right) \leq C_0 \frac{1}{nT} $$
+        holds with probability 1 for all sufficiently large $n, T$, where $x_{ij} = (x_{i1j},  \ldots x_{iTj})^{\prime}$.\label{third}
+    \end{enumerate}
     \end{assumption}
+Assumption \ref{assumption_X} provides regularity conditions that impose restrictions on the design matrix. Part \ref{first} sets a boundary for the second moment of $x_{it}$, part \label{second} bounds the maximal eigenvalue of the matrix $\left( \sum_{i=1}^n ( X_i ^\prime (I - \mathcal{Z}_k) X_i \right)^{-1}$ and part \ref{third} restricts the behavior of the outer product of $x_{ij}$ with itself given $\mathcal{D}_T$. While the stipulations of assumption \ref{assumption_X} might initially seem arcane, \citet{kneip2012new} provides examples that aid in elucidating the functioning of the regularity conditions. One vital requirement of these conditions is that the regressors \(x_{it}\) follow a less smooth temporal evolution than the time-varying individual errors. Hence, this assumption imposes no major restrictions when dealing with stationary processes in $x_{it}$ since stationary processes generate non-smooth time paths. 
 
-    \begin{assumption}
+
+    \begin{assumption}\label{assumption_erros_kss}
         The error terms $\varepsilon_{it}$ are i.i.d with $E(\varepsilon_{it}) = 0, \operatorname{Var}(\varepsilon_{it}) = \sigma ^2 > 0$, and $E(\varepsilon_{it}^4) < \infty$. Moreover $\varepsilon_{it}$ is independent form $v_i(s)$ and $x_{isj}$ for all $t,s,j$.
     \end{assumption}
 
+Unlike the method developed by \citet{bai2002determining} (\Cref{bai}), the theoretical results in \citet{kneip2012new} rely on the somewhat restrictive assumptions of \ac{iid} errors. The authors argue that results similar to those from the referenced work could be established under heteroskedasticity and serial correlation of the error terms, although no development was made in this direction. In \Cref{simulation}, the finite sample performance of the \ac{KSS} method will be tested via a simulation study under conditions that depart from assumption \ref{assumption_erros_kss}.
+
+\subsubsection{Limiting Theory}
+
+Let $E_{\varepsilon}$ denote the conditional expectation given $v_i$ and $X_i$ for $i = 1, \ldots, n$. Assume that the smoothing parameters $\kappa \equiv \kappa_{n,T} >0$ are such that $\kappa b(T) \to 0$ as well as $\frac{\kappa^{1/4}}{T} \to 0$ as $n,T \to \infty$. \citet{kneip2012new} show that under assumptions \ref{kss_asumption_1} - \ref{assumption_erros_kss}, the estimator for $\beta$ is consistent, and  the asymptotic distribution of slope estimators is given by 
+
+$$\hat{\Sigma}_\beta^{-1 / 2}\left(\hat{\beta}-\mathrm{E}_\epsilon(\hat{\beta})\right) \stackrel{d}{\rightarrow} N(0, I),$$
+
+where the variance-covariance matrix $\hat{\Sigma}_\beta$ is defined as:
+\begin{equation*}
+    \hat{\Sigma}_\beta=\sigma^2\left(\sum_{i=1}^n X_i^{\prime}\left(I-\mathcal{Z}_\kappa\right) X_i\right)^{-1}\left(\sum_{i=1}^n X_i^{\prime}\left(I-\mathcal{Z}_\kappa\right)^2 X_i\right)\left(\sum_{i=1}^n X_i^{\prime}\left(I-\mathcal{Z}_\kappa\right) X_i\right)^{-1} .
+\end{equation*}
+\citet{kneip2012new} also provide theoretical results for the estimates of the common factors $\hat{f_l} = (\hat{f}_l(1), \ldots, \hat{f}_l(T))^\prime$ and individual loading parameters $\hat{\lambda}_{il}$. Convergence rates depend on the particular specification of $c(T), b(T)$ and $d(T)$. For an illustration of this issue, the reader is referred to \citet{kneip2012new}, which provides the exact convergence rate for two concrete examples. 
 
 
-\newtheorem{theorem}{Theorem}
 
-\begin{theorem}
-Under the above assumptions, it holds that as $n, T \to \infty$:
+
+\subsection{The Estimator by \citet{bai2009panel}}\label{bai}
+
+
+In order to proceed, it is necessary to introduce items of key importance for the limiting theory results presented in \citet{bai2009panel}. Define a $T \times P$ vector $Z_i=\left(Z_{i 1}, Z_{i 2}, \ldots, Z_{i T}\right)^{\prime}$ as:
+\begin{equation}\label{z_bai}
+    Z_i=\mathcal{M}_F X_i-\frac{1}{n} \sum_{j=1}^n \mathcal{M}_F X_j a_{i j},
+\end{equation}
+where $a_{i j}=\lambda_i^{\prime}\left(\Lambda^{\prime} \Lambda / n\right)^{-1} \lambda_j$ denotes a scalar. Notice that  (\ref{z_bai}) is equal to the deviation of the isolated regressors $\mathcal{M}_F X_i$ from its weighted average.  Further, let:
+\begin{equation}\label{d_bai}
+    D(F)=\frac{1}{n T} \sum_{i=1}^n Z_i^{\prime} Z_i = \frac{1}{n T} \sum_{i=1}^n \sum_{t=1}^T Z_{i t}^{\prime} Z_{i t}.
+\end{equation}
+Matrix (\ref{d_bai}) will be vital for defining the variance-covariance matrix for limiting the distribution of the slope parameters. Given enough variation of $Z_{i T}$ across $i$ and $t$, (\ref{d_bai}) will be positive definite \citep{bai2009panel}.  Having set forth these definitions, the assumptions relevant to the limiting theory results of the referenced work are subsequently presented. 
+
+\subsubsection{Assumptions}\label{assumptions_bai}
+
+
+\setcounter{assumption}{0}
+\renewcommand{\theassumption}{\Alph{assumption}}
+
+
+
+\begin{assumption}\label{bai_positive}
+    Let \(\mathcal{F}=\left\{F: F^{\prime} F / T=I\right\}\) for a fixed \(d \times d\) matrix \(I\). Then:
+    
+    \begin{enumerate}[label = (\roman*)]
+        \item \(\inf _{F \in \mathcal{F}} D(F)>0\)
+        \item For some \(M > 0\), we have \(E\|x_{it}\|^4 \leq M\).
+    \end{enumerate} 
+\end{assumption}
+
+Assumption \ref{bai_positive} states that (\ref{d_bai}) is positive definite in the limit. This provides for identification conditions for the slope coefficient $\beta$.  The above conditons further rule time-invariant regressors out and hence require $x_{it}$ to have enough variation across $t$. Nonetheless, \citet{bai2009panel} show that this assumption can be easily relaxed to include classical additive fixed effects in the model. The reader is referred to said work for a detailed investigation on this topic. 
+
+
+\begin{assumption}\label{stationary_factors}
+    There exist a constant \(M > 0\) and \(d \times d\) non-random matrices \(\Sigma_F, \Sigma_{\Lambda} > 0\) such that:
+    \begin{enumerate}[label = (\roman*)]
+        \item \(E\|f_t\|^4 \leq M\) and \(\frac{1}{T}  F^{\prime} F \stackrel{p}{\longrightarrow} \Sigma_F\) as \(T \rightarrow \infty\).
+        \item \(E\|\lambda_i\|^4 \leq M\) and \(\Lambda^{\prime} \Lambda /n  \stackrel{p}{\longrightarrow} \Sigma_{\Lambda}\) as \(n \rightarrow \infty\).
+    \end{enumerate}
+\end{assumption}
+
+
+This is a standard assumption in factor models. It imposes moment conditions on the common factors and the individual loading parameters, which collectively ensure that the factors are neither insubstantial nor degenerate and that each factor plays a meaningful role in shaping the variance of $Y_i$ \citep{bai2002determining, bai2003inferential, bai2008large, bai2009panel}.
+
+Importantly, this assumption allows for the common factors to follow a deterministic time trend such as $f_t = \frac{t}{T}$ or to be stationary dynamic processes so that $f_t=\sum_{j=1}^{\infty} C_j e_{t-j}$, where  $e_t$  are \ac{iid} zero mean processes. However, this rules out factors following unit-root processes and $I(p)$ processes with $p \geq 1$ \citep{bai2009panel, bada2014parameter}.
+
+\begin{assumption}\label{bai_assumption_errors}
+    The following conditions hold for some constants \(M > 0\) and \(\bar{\sigma}_{i j}, \tau_{t s} > 0\):
+    \begin{enumerate}[label = (\roman*)]
+        \item \(E(\varepsilon_{i t})=0\) and \(E|\varepsilon_{i t}|^8 \leq M\).
+        \item \(E(\varepsilon_{i t} \varepsilon_{j s})=\sigma_{i j, t s}, |\sigma_{i j, t s}| \leq \bar{\sigma}_{i j}\) for all \((t, s)\) and \(|\sigma_{i j, t s}| \leq \tau_{t s}\) for all \((i, j)\), with
+        \[
+        \frac{1}{n} \sum_{i, j=1}^n \bar{\sigma}_{i j} \leq M, \quad \frac{1}{T} \sum_{t, s=1}^T \tau_{t s} \leq M, \quad \frac{1}{n T} \sum_{i, j, t, s=1}|\sigma_{i j, t s}| \leq M.
+        \]\label{bounded_error}
+        \item For every \((t, s), E\left|n^{-1 / 2} \sum_{i=1}^n\left[\varepsilon_{i s} \varepsilon_{i t}-E(\varepsilon_{i s} \varepsilon_{i t})\right]\right|^4 \leq M\).\label{bounded_error2}
+        \item Additionally,
+        \[
+       \begin{aligned}
+        & \frac{1}{nT^2} \sum_{t, s, u, v} \sum_{i, j}\left|\operatorname{cov}\left(\varepsilon_{i t} \varepsilon_{i s}, \varepsilon_{j u} \varepsilon_{j v}\right)\right| \leq M, \\
+        & \frac{1}{n^2T} \sum_{t, s} \sum_{i, j, k, \ell}\left|\operatorname{cov}\left(\varepsilon_{i t} \varepsilon_{j t}, \varepsilon_{k s} \varepsilon_{\ell s}\right)\right| \leq M .\label{covariance_as}
+\end{aligned}
+        \]
+    \end{enumerate}
+\end{assumption}
+
+Assumption \ref{bai_assumption_errors} deals with the idiosyncratic error terms $\varepsilon_{it}$. Part \ref{bounded_error} allows for weak dependence across both time series and cross-section dimensions, and it also permits heteroskedasticity in \( \varepsilon_{it} \). With the assumptions of boundedness, the conditions laid out by \citet{chamberlain1982arbitrage} for accommodating cross-sectionally correlated error terms are satisfied and extended upon. This is discussed in further detail in \citet{bai2002determining}, \citet{bai2003inferential} and \citet{bai2008large}. Part \ref{bounded_error2} further bounds the behavior of the error terms, limiting how much they can deviate from their expected values and ensuring that these deviations do not have heavy tails. Finally, part \ref{covariance_as} further restricts the covariance of the error terms across time and within cross-sections. This assumption is examined thoroughly in \citet{bai2009panel}.
+ 
+\begin{assumption}\label{errors_bai}
+    \(\varepsilon_{i t}\) is independent of \(X_{j s}\), \(\lambda_j\), and \(F_s\) for all \(i\), \(t\), \(j\), and \(s\).
+\end{assumption}
+
+Assumption \ref{errors_bai} is imposed to simplify proofs around the consistency and asymptotic distribution of the estimators. Importantly, this assumption does not exclude the possibility of cross-sectional correlation among $X_{i t}, \lambda_i$, and $\varepsilon_{i t}$. Additionally, while this condition theoretically rules out dynamic panel models, the method works well with lagged dependent variables. However, when the latter are included, $\varepsilon_{it}$ cannot be serially correlated. This is studied through a series of Monte Carlo simulations in \citet{bai2009supplement}. In contrast, \citet{bada2014parameter} explicitly allow for dynamic panel models in their setup, and said specification is used in the application presented in the referenced paper.  This setup will be used for estimation and further discussed in \Cref{application}.
+
+
+
+
+\subsubsection{Limiting Theory}\label{bai.limiting}
+
+
+
+\citet{bai2009panel} show that under Assumptions \ref{bai_positive} - \ref{errors_bai} the estimator $\beta$ is consistent for known $d$ such that $\hat{\beta}(d) -\beta \stackrel{p}{\longrightarrow} 0$. Moreover, with $\mathcal{P}_A = A\left(A^{\prime} A\right)^{-1} A^{\prime}$, $\frac{1}{T}F^\prime \hat{F}$ is invertible and  $\left\|P_{\hat{F}}-P_{F}\right\| \stackrel{p}{\longrightarrow} 0$ . The asymptotic distribution of the slope estimator $\hat{\beta}(d)$ for a known $d$ is then given by:
+$$
+\sqrt{n T}(\hat{\beta}(d)-\beta) \stackrel{d}{\longrightarrow}  N\left(0, D_0^{-1} D_Z D_0^{-1}\right),
+$$
+where \(D_0 = \operatorname{plim} \frac{1}{n T} \sum_{i=1}^n \sum_{t=1}^T Z_{i t}^{\prime} Z_{i t} = \operatorname{plim} D(F) \). In turn, $D_Z$ is defined according to the behavior of $\varepsilon_{it}$ and the proportion between $T$ and $n$. This yields six differing limits for $D_Z$ given by:
 
 \begin{enumerate}
-    \item 
+    \item \(D_Z = D_0^{-1} \sigma^2\) if the errors are \ac{iid} with zero mean and variance \(\sigma^2\).
+    \item \(D_Z = \operatorname{plim} \frac{1}{n T} \sum_{i=1}^n \sigma_i^2 \sum_{t=1}^T Z_{i t}^{\prime} Z_{i t}\), where \(\sigma_i^2 = E\left(\varepsilon_{i t}^2\right)\), \(E\left(\varepsilon_{i t}\right) = 0\), if cross-section heteroskedasticity exists and \(n / T \rightarrow 0\).\label{error.type2}
+    \item \(D_Z = \operatorname{plim} \frac{1}{n T} \sum_{i=1}^n \sum_{j=1}^n \omega_{i j} \sum_{t=1}^T Z_{i t}^{\prime} Z_{j t}\), where \(\omega_{i j} = E\left(\varepsilon_{i t} \varepsilon_{j t}\right)\), \(E\left(\varepsilon_{i t}\right) = 0\), if cross-section correlation and heteroskedasticity exist and \(n / T \rightarrow 0\).\label{error.type3}
+    \item \(D_Z = \operatorname{plim} \frac{1}{n T} \sum_{t=1}^T \sigma_t^2 \sum_{i=1}^n Z_{i t}^{\prime} Z_{i t}\), where \(\sigma_t^2 = E\left(\varepsilon_{i t}^2\right)\), \(E\left(\varepsilon_{i t}\right) = 0\), if heteroskedasticity in the time dimension exists and \(T / n \rightarrow 0\).\label{error.type4}
+    \item \(D_Z = \operatorname{plim} \frac{1}{n T} \sum_{t=1}^T \sum_{s=1}^T \rho(t, s) \sum_{i=1}^n Z_{i t}^{\prime} Z_{i s}\), where \(\rho(t, s) = E\left(\varepsilon_{i t} \varepsilon_{i s}\right)\), \(E\left(\varepsilon_{i t}\right) = 0\), if correlation and heteroskedasticity in the time dimension exist and \(T / n \rightarrow 0\).\label{error.type5}
+    \item \(D_Z = \operatorname{plim} \frac{1}{n T} \sum_{t=1}^T \sum_{i=1}^n \sigma_{i t}^2 Z_{i t}^{\prime} Z_{i s}\), where \(\sigma_{i t}^2 = E\left(\varepsilon_{i t}^2\right)\), \(E\left(\varepsilon_{i t}\right) = 0\), if heteroskedasticity in both time and cross-section dimensions exists with \(T / n^2 \rightarrow 0\) and \(n / T^2 \rightarrow 0\).\label{error.type6}
 \end{enumerate}
-\end{theorem}
-\section{Finite Sample Properties via Simulations}
 
-The finite sample properties of the estimators presended above are studied via Monte Carlo simulations. In addition to the KSS and Eup methods, we also consider the classical time-invariant fixed effects estimator. The setup of the simulation study is taken form \citet{kneip2012new}.
 
-The panel-data model is given by.
 
-\begin{equation}\label{sim_model}
-y_{i t}= \sum_{j =1}^P x_{itj} \beta_j + v_i(t)+\varepsilon_{i t} \quad i=1, \ldots, n ; \quad t=1, \ldots, T
+Nonetheless, if $\varepsilon_{i t}$ are allowed to be correlated and heteroskedastic in both dimensions and if $T / n \rightarrow c>0$, asymptotic bias exists. The limiting distribution for this case is given in \citet{bai2009panel}, who also derived the biased corrected estimator. A thorough analysis of this issue is outside the scope of the present work. The reader is referred to the aforementioned study for further details and to \citet{bada2012phtt} for a quick examination of the subject. 
+
+\subsubsection{The \ac{Eup} Estimator}
+The asymptotic theory results of \citet{bada2014parameter} rely on a different set of assumptions than the one presented in this \Cref{assumptions_bai}. Still, the authors show that estimating $d$ with the remaining model parameters does not affect the asymptotic properties of $\hat{\beta}(d)$. The asymptotic distribution of $\hat{\beta}(\hat{d})$ is then also given by:
+$$
+\sqrt{n T}(\hat{\beta}(d)-\beta) \stackrel{d}{\longrightarrow}  N\left(0, D_0^{-1} D_Z D_0^{-1}\right),
+$$
+where $D_0$ and $D_Z$ are defined as above. \citet{bada2014parameter} also derive a bias-corrected estimator for scenarios where the errors \(\varepsilon_{i t}\) exhibit correlation and heteroskedasticity across both dimensions and where the ratio \(T / n\) converges to a constant \(c > 0\). A comprehensive analysis of this case is provided in the referenced work.
+ 
+
+\section{Estimating the Factor Dimension $d$}\label{dimension}
+
+This section concisely discusses the competing estimators for the unknown factor dimension $d$. Although this is an integral component of the estimation procedures examined earlier, a comprehensive examination of this topic falls beyond the scope of the present work. Detailed investigations on the factor dimension $d$ estimation can be found in \citet{bai2009panel, kneip2012new} and \citet{bada2012phtt}.  
+
+\subsection{The Criterion by \citet{kneip2012new}}
+
+\citet{kneip2012new} propose estimating $d$ via a sequential testing procedure. This necessitates the availability of an estimator for the variance of the \ac{KSS} estimator, which is given by:
+\begin{equation}
+    \hat{\sigma}^2=\frac{1}{(n-1) \operatorname{tr}\left(\left(I-\mathcal{Z}_\kappa\right)^2\right)} \sum_{i=1}^n\left\|\left(I-\mathcal{Z}_\kappa\right)\left(Y_i-X_i \hat{\beta}\right)\right\|^2 .
 \end{equation}
+While this estimator is suited for estimating the factor dimension $d$, \citet{kneip2012new} note that it tends to overestimate the true value of $\sigma^2$. Once the factor dimension $d$ is determined, a better suited estimator for $\sigma^2$ is:
+\begin{equation}
+\tilde{\sigma}^2=\frac{1}{(n-1) T} \sum_{i=1}^n\left\|Y_i-X_i \hat{\beta}-\sum_{l=1}^{\hat{d}} \hat{\lambda}_{i l} \hat{f}_l\right\|^2,
+\end{equation}
+which is a consistent estimator for $\sigma^2$ and can be used for specification tests. Now, the procedure for estimating $d$ is carried out through the following test statistic:
+\begin{equation}
+    \operatorname{KSS}(d)=\frac{n \sum_{r=d+1}^T \hat{\rho}_r-(n-1) \hat{\sigma}^2 t r\left(\mathcal{Z}_\kappa \hat{\mathcal{P}}_d \mathcal{Z}_\kappa\right)}{\hat{\sigma}^2 \sqrt{2 n \cdot \operatorname{tr}\left(\left(\mathcal{Z}_\kappa \hat{\mathcal{P}}_d \mathcal{Z}_\kappa\right)^2\right)}} \stackrel{a}{\sim} N(0,1) ,
+\end{equation}
+where $\hat{\mathcal{P}}_d=I-\frac{1}{T} \sum_{l=1}^d f_l f_l^{\prime}$ with $f_l=\left(f_l(1), \ldots, f_l(T)\right)^{\prime}$. The selection method is carried out as follows. First, the a significance level $\alpha > 0$ is chosen  (e.g., $\alpha=1 \%$ ) and the null hypothesis is set to $H_0: d=0$. Then, a test is conducted to examine if $\operatorname{KSS}(0) \leq z_{1-\alpha}$, where $z_{1-\alpha}$ is the $(1-\alpha)$-quantile of the standard normal distribution. If the null can be rejected, the method is repeated with $d=1,2,3, \ldots$ until $H_0$ cannot be rejected. The estimated dimension is determined by the smallest value of $d$ that results in a rejection of the null hypothesis $H_0$. As exposed by \citet{bada2012phtt}, this procedure can be slightly modified to enable specification tests. This enables testing for common factors beyond the possible presence of additional classical additive effects in the model. The reader is referred to the cited work for further details. 
 
-we and simulate samlpes of size $n=30,100,300$ with $T = 12,30$ in a model with $P = 2$ regressors. The slope parameters' true values given by $\beta_1=\beta_2=0.5$. The regressors $X_{it} = (x_{it1}, x_{it2})^\prime$ are generated acording to a bivariate vetor autoregression model:
+This selection procedure can be used for both stationary and nonstationary factors. Nonetheless, this criterion tends to ignore weakly auto-correlated factors, which might lead to underestimating the factor dimension $d$ \citep{bada2012phtt}.
+
+\subsection{The Criteria by \citet{bai2002determining} and \citet{bai2004estimating}}\label{bai_dim}
+
+\citet{bai2002determining} introduce an alternative method for estimating $d$, which is more robust against the underestimation issues previously discussed. The core of this method involves identifying an appropriate penalty term $g_{n T}$, which allows for the minimization of a series of criteria to yield an estimate for $d$. Formally, $\hat{d}$ is obtained through the minimization of:
+\begin{equation}
+    \mathrm{PC}(d)=\frac{1}{n T} \sum_{i=1}^n \sum_{t=1}^T\left(y_{i t}-\hat{y}_{i t}(d)\right)^2+l g_{n T},
+\end{equation}
+for all $d \in \{1,2,3, \ldots\} $, where $\hat{y}_{i t}(d)$ is the fitted value for a given factor dimension $d$. \citet{bai2002determining} propose six varying PC criteria for estimating $d$. In what follows, criteria PC1-PC3 will be examined. These are determined by the following specifications of $g_{nT}$:
+
+\begin{align}
+g_{n T}^{(\mathrm{PC} 1)} & =\hat{\sigma}^2 \frac{(n+T)}{n T} \log \left(\frac{n T}{n+T}\right),\\
+g_{n T}^{(\mathrm{PC} 2)} & =\hat{\sigma}^2 \frac{(n+T)}{n T} \log (\min \{n, T\}), \, \text{and} \\
+g_{n T}^{(\mathrm{PC} 3)} & =\hat{\sigma}^2 \frac{\log (\min \{n, T\})}{\min \{n, T\}}.
+\end{align}
+
+Here, the variance estimator $\hat{\sigma}^2$ is given by:
+\begin{equation}
+    \hat{\sigma}^2\left(d_{\max }\right)=\frac{1}{n T} \sum_{i=1}^n \sum_{t=1}^T\left(y_{i t}-\hat{y}_{i t}\left(d_{\max }\right)\right)^2 .
+\end{equation}
+Importantly, these do not depend on the proportional behavior of $n$ and $T$, as do several other proposed specifications. It turns out that PC1-PC3 are asymptotically equivalent, although they have varying finite sample properties. For example, PC3 is shown to be less robust than PC1 and PC2 whenever $n$ or $T$ are small in the simulation study carried out in \citet{bai2002determining}. Moreover, the simulations showed PC1 and PC2 to be consistent across several \ac{DGPs}. 
+
+The dimensionality criteria mentioned above are developed for factors that exhibit stochastic boundedness. To determine the number of unit root factors, \citet{bai2004estimating} proposes a set of additional panel criteria:
+\begin{equation}
+    \operatorname{IPC}(d)=\frac{1}{n T} \sum_{i=1}^n \sum_{t=1}^T\left(y_{i t}-\hat{y}_{i t}(d)\right)^2+l g_{n T},
+\end{equation}
+with:
+\begin{align}
+g_{n T}^{(\mathrm{IPC} 1)} & =\hat{\sigma}^2 \frac{\log (\log (T))}{T} \frac{(n+T)}{n T} \log \left(\frac{n T}{n+T}\right), \\
+g_{n T}^{(\mathrm{IPC} 2)} & =\hat{\sigma}^2 \frac{\log (\log (T))}{T} \frac{(n+T)}{n T} \log (\min {n, T}), \, \text{and} \\
+g_{n T}^{(\mathrm{IPC} 3)} & =\hat{\sigma}^2 \frac{\log (\log (T))}{T} \frac{(n+T-l)}{n T} \log (n T).
+\end{align}
+
+\section{Monte Carlo Simulations}\label{simulation}
+
+
+This section aims to conduct a thorough comparative analysis of the finite sample properties of the estimation methods studied before via Monte Carlo simulations. In addition to the \ac{KSS} and \ac{Eup} estimators and the method by \citet{bai2009panel}, I also consider the classical time-invariant fixed effects estimator. The general setup of the simulation study is primarily taken from \citet{kneip2012new}. Besides incorporating the comparison of the \ac{KSS} method with the \ac{Eup} estimator and the approach proposed by \citet{bai2009panel}, this work innovates by testing the estimators under different underlying assumptions about the idiosyncratic error terms. 
+
+\subsection{Setup of the Simulation Study}
+
+The panel-data model is given by:
+\begin{equation}\label{sim_model}
+y_{i t}= \sum_{j =1}^P x_{itj} \beta_j + \nu_{it} + \varepsilon_{i t} \quad i=\{1, \ldots, n\} ; \quad t=\{1, \ldots, T\},
+\end{equation}
+where $\nu_{it}$ is as in (\ref{factors}). I simulate samples of size $n=30,100,300$ with $T = 12,30$ in a model with $P = 2$ regressors. The slope parameters' true values are given by $\beta_1=\beta_2=0.5$. The regressors $x_{it} = (x_{it1}, x_{it2})^\prime$ are generated according to a bivariate vector autoregression model in accordance to \citet{park2003semiparametric, park2007semiparametric} as in \citet{kneip2012new}:
 \begin{equation}\label{sim_x}
-X_{i t}=R X_{i, t-1}+\eta_{i t} \quad \text { with } \quad R=\left(\begin{array}{cc}
+x_{i t}=R x_{i, t-1}+\eta_{i t} \quad \text { with } \quad R=\left(\begin{array}{cc}
 0.4 & 0.05 \\
 0.05 & 0.4
-\end{array}\right) \quad \text { and } \quad \eta_{i t} \sim N\left(0, I_2\right)
+\end{array}\right) \quad \text { and } \quad \eta_{i t} \sim N\left(0, I_2\right).
 \end{equation}
-
-To intitalize the simulation, we set $X_{i1} \sim N(0, (I_2 - R^2)^{-1})$ and generate the rest of the sample according to (\ref{sim_x}). Thereafter, the $n$ regressor-series $\left(x_{1 i 1}, x_{2 i 1}\right)^{\prime}, \ldots,\left(x_{1 i T}, x_{2 i T}\right)^{\prime}$ are additionally shifted such that there are three different mean-value-clusters, fixed at $ \mu_1=(5,5)^{\prime}, \mu_2=(7.5,7.5)^{\prime} \text {, and } \mu_3=(10,10)^{\prime}$. This is to get a reasonable cloud of points for the regressors \citep{kneip2012new}.
-
-We generate time-varying individual effects following five different data generating processes:
+To intitalize the simulation, I set $x_{i1} \sim N(0, (I_2 - R^2)^{-1})$ and generate the rest of the sample according to (\ref{sim_x}). Thereafter, the $n$ regressor-series $\left(x_{1 i 1}, x_{2 i 1}\right)^{\prime}, \ldots,\left(x_{1 i T}, x_{2 i T}\right)^{\prime}$ are additionally shifted such that there are three different mean-value-clusters, fixed at $ \mu_1=(5,5)^{\prime}, \mu_2=(7.5,7.5)^{\prime} \text {, and } \mu_3=(10,10)^{\prime}$. This is to get a reasonable cloud of points for the regressors \citep{park2003semiparametric, park2007semiparametric, kneip2012new}. The time-varying individual effects are generated via the following \ac{DGPs}:
 \begin{enumerate}
-\item[$\text{DGP}1$:] $v_i(t)=\theta_{i0}+\theta_{i1}\frac{t}{T}+\theta_{i2}\left(\frac{t}{T}\right)^2$,
-\item[$\text{DGP}2$:] $v_i(t)=\phi_i r_t$,
-\item[$\text{DGP}3$:] $v_i(t)=v_{i1} \sin (\pi t / 4) +v_{i2} \cos (\pi t / 4)$,
-\item[$\text{DGP}4$:] $v_i(t)=\xi_i$,
-\item[$\text{DGP}5$:] $v_i(t) = v_{i1} e^{-\frac{t}{4}}  \sin (\pi t / 4)$
+\item\textbf{\acs{DGP}1}: $\nu_{it}=\theta_{i0}+\theta_{i1}\frac{t}{T}+\theta_{i2}\left(\frac{t}{T}\right)^2$,
+\item\textbf{\acs{DGP}1}: $\nu_{it}=\phi_i r_t$,
+\item\textbf{\acs{DGP}1}: $\nu_{it}=v_{i1} \sin (\pi t / 4) +v_{i2} \cos (\pi t / 4)$, and
+\item\textbf{\acs{DGP}1}: $\nu_{it}=\xi_i$,
 \end{enumerate}
 
-where $\theta_{i j}(j=0,1,2) \sim \: \text{i.i.d.} \: 5N(0,1),\xi_i, v_{i j}(j=1,2) \sim \: \text{i.i.d.} \: 3N(0,1)$, and $r_{t+1} = r_t + \delta_t$, with $\delta_t, r_1 \sim \: \text{i.i.d.} \: 3N(0,1)$. 
+where $\theta_{i j}(j=0,1,2) \sim \: \text{i.i.d.} \: 5N(0,1),\: \phi_i, \xi_i, \: v_{i j}(j=1,2) \sim \: \text{i.i.d.} \: 3N(0,1)$, and $r_{t+1} = r_t + \delta_t$, with $\delta_t, r_1 \sim \: \text{i.i.d.} \: 3N(0,1)$. 
 
-The second regressor $x_{it2}$ is allowed to be endogenous with a correlation with $v_i(t)$ of $\rho = 0.5$. Let $w_{it}$ be the endogenous part of the regressor, so that $w_{it} = \rho v_i(t) + \sigma_v \sqrt{1-\rho^2}\epsilon_{it}$\footnote{In generating $w_{i t}$, the effects $v_i(t)$ is multiplied by 10 to balance with the magnitude of $x_{i t2}$.}, where $\sigma_v$ is the standard deviation of $v_i(t)$ and $\epsilon_{i t} \sim N(0,1)$. We then define the endogenous regressor as $\tilde{x}_{it2} = x_{it2} + w_{it}$.
+\ac{DGP}1 provides smooth time-varying effects following a second-order polynomial, \ac{DGP}2 describes a random walk, and \ac{DGP}3 is included to model effects with large temporary variations. Lastly, \ac{DGP}4 describes the classical unit-specific fixed effect. The underlying smoothness of processes in \ac{DGP}1 and \ac{DGP}3 should favorably align with the specification of the \ac{KSS} estimator, while the arbitrary structure of \ac{DGP}2 should favor other estimation methods. All factor-based methods are expected to perform under \ac{DGP}4, given arguments presented in \Cref{section2}, albeit at an efficiency loss vis-á-vis the classic within estimator. 
+
+The second regressor $x_{it2}$ is allowed to be endogenous with a correlation with $v_i(t)$ of $\rho = 0.5$. Let $w_{it}$ be the endogenous part of the regressor, so that\footnote{Following \citet{kneip2012new}, in generating $w_{i t}$, the effects $\nu_{it}$ are multiplied by 10 to balance with the magnitude of $x_{i t2}$.} $w_{it} = \rho \nu_{it} + \sigma_v \sqrt{1-\rho^2}u_{it}$, where $\sigma_v$ is the standard deviation of $\nu_{it}$ and $u_{i t} \sim N(0,1)$. I then define the endogenous regressor as $\tilde{x}_{it2} = x_{it2} + w_{it}$. I further consider five different specifications for the idiosyncratic error terms. 
+
+\begin{enumerate}
+    \item \textbf{Homoskedastic Errors:} Guassian errors with unit variance i.e.,$\varepsilon_{it} \sim N(0,1)$.
+    \item \textbf{Time-Varying Heteroskedastic Errors:} $\varepsilon_{it} \sim N(0,\sigma_t)$, where the standard deviation $\sigma_t = \sqrt{1+t}$ depends on the time period $t$.
+    \item \textbf{Cross-Sectional Heteroskedastic Errors:}  $\varepsilon_{it} \sim N(0,\sigma_i)$, where the standard deviation $\sigma_i = \sqrt{1+\frac{i}{10}}$ depends on the cross-sectional unit $i$.
+    \item \textbf{Time and Cross-Sectional Varying Heteroskedastic Errors:} $\varepsilon_{it} \sim N(0, \sigma_{it})$, where the standard deviation $\sigma_{it} = \sqrt{1 + \frac{i}{10} +t}$ depends on both the unit $i$ and the time period $t$.
+    \item \textbf{Autorregresive error structure :} $\varepsilon_{it} = \rho \varepsilon_{it-1} + \sqrt{1 - \rho^2} u_{it}$, with $u_{it} \sim N(0,1)$, where $\rho$ is the correlation between consecutive errors. 
+\end{enumerate}
+
+Following \citet{bada2014parameter}, I explore two distinct scenarios in the specification of the autoregressive error structure. These scenarios represent different levels of correlation between consecutive error terms, namely low-level and high-level correlation.  The parameter $\rho$ is drawn from a uniform distribution over a pre-defined range for each iteration. For the low-level correlation scenario $\rho \sim U[-0.3, 0.3]$ while $\rho \sim U[0.6, 0.8]$ for the high-correlation sencario. 
+
+All Monte Carlo simulations consider \ac{DGP}1 - \ac{DGP}5. The first battery of simulations assesses the estimation methods under homoskedastic errors with and without endogenous regressors. Thereafter, I simulate the scenarios relating to heteroskedastic errors, albeit only considering exogenous regressors. Finally, I consider low-level and high-level serially correlated error terms, though, again, exlusively for exogenous regressors. 
+
+
+Since the estimator proposed by \citet{bai2009panel} does not include an inner estimation of the factor dimension $d$, I consider two different scenarios for the method. First, taking from \citet{bada2014parameter} the estimation process is naively carried out by setting $\hat{d}_{\text{max}} = \hat{d} = 8$ \footnote{\citet{bada2014parameter} first set $\hat{d}_{\text{max}} = 8$ and later produce an external estimate $\hat{d}$ for their simulation study. This second step is not considered in the present work.}. Then, an infeasible version of the estimator is considered, where the true dimension $d$ is known a priori and used for estimation. This should provide reasonable bounds for the performance of \citet{bai2009panel} under different considerations around the estimation of $d$. The two different approaches are expected to vary in efficiency. However, setting an arbitrarily large $\hat{d}$ should not affect the consistency of the estimation of the common slope parameters. 
+
+For the \ac{Eup} estimator, the PC1 criterion is used for \ac{DGP}1, \ac{DGP}3, and \ac{DGP}4 to estimate the unknown factor dimension. Criterion IPC1 is used for \ac{DGP}2 to account for factor $r_t$ having a unit root. The dimensionality criterion proposed by \citet{kneip2012new} is used for the \ac{KSS} estimator. Further, for computational efficiency,  the smoothing parameter $\kappa$ is estimated via the \ac{GCV} criterion proposed by \citet{bada2012phtt}. 
+
+When considering heteroskedasticity and autocorrelation, I use robust standard errors for the method by \citet{bai2009panel} and the \ac{Eup} estimator. I specifically employ error types \ref{error.type2}, \ref{error.type4}, and \ref{error.type6} for scenarios with cross-sectional-level, time-level and combined time and cross-sectional-level heteroskedasticity, respectively. Additionally, I use error-type \ref{error.type5} when the error terms are autocorrelated. The results of the within-estimator are also reported utilizing robust standard errors to account for heteroskedasticity and serial correlation when necessary. 
+
+
+\subsection{Simulation Results}
+
+I calculate the \ac{MSE} for the time-varying individual effects $\nu_{it}$ and the average dimension for the factor-based methods. Additionally, I determine the \ac{MSE} for the common slope estimate and compute bias, variance, and statistical power at a significance level of $5\%$ for all methods under consideration. ts. As a general statement, across all experiments,  the \ac{Eup} estimator stands out as the favored estimator, while the results for the \ac{KSS} approach are mixed. Additonaly, the performance of the estimator set forth by \citet{bai2009panel} depend on the external estimation of the unknown factor dimension.
+
+Due to space constraints, detailed tables showcasing the simulation results are confined to \Cref{monte_carlo_appendix}. Subsequent discussions will predominantly center on results from specifications with homoskedastic error terms, given that the observed patterns in these simulations consistently hold across all scenarios.
+
+
+\subsubsection{Homoskedastic Error Terms}\label{homodiscuss}
+I start with analyzing results related to exogenous regressors and then proceed to those concerning endogenous regressors. \Cref{DGP1} presents the results for \ac{DGP}1. Across all methods considered, \ac{KSS} consistently offers lower values \ac{MSE} for the estimates of the time-varying individual effects $\nu_{it}$. The factors' inherent smoothness might contribute to the superior performance.
+ Interestingly, the \ac{Eup} method slightly outperforms the estimator proposed by \citet{bai2009panel} with $\hat{d} = d$. This might be driven by the inherent inflexibility of the infeasible estimator. Indeed, if one of the factors explains a negligible share of the variance, fitting the model without it might lead to higher efficiency.  As for the factor dimension estimation, the \ac{CV} criterion suggested by \citet{kneip2012new} consistently underestimates the actual factor dimension. In contrast, the PC1 criterion introduced by \citet{bai2002determining} fares better, yet it typically produces estimates where $\hat{d} < d$. However, this issue does not seem to affect the estimations' efficiency significantly.   
+
+Turning to the common slope parameters results, \ac{KSS} once again seems to provide the lowest \ac{MSE} throughout. The \ac{Eup} method tends to provide results that are competitive with \ac{KSS}, especially for larger sample sizes. As expected, for the estimator proposed by \citet{bai2009panel}, the specification with $\hat{d} = d$ consistently offers lower variances for the slope parameters estimates as compared to that with $\hat{d} = 8$. Although the estimates for $\beta_1$ and $\beta_2$ for the within estimator are generally unbiased, the \ac{MSE} and variance of the estimates consistently remain close to one order of magnitude larger than the other estimators, safe the case for the method proposed by \citet{bai2009panel} with $\hat{d} =8$. This points to the importance of explicitly modeling the factor structure for efficient estimation. Further, statistical power values are arbitrarily close to one, especially for larger sample sizes. 
+
+
+ \Cref{DGP2} displays the results for \ac{DGP}2. The \ac{KSS} estimator shows severe distortions for estimating the time-varying individual effects. The core issue lies in the fact that the factors contained in \ac{DGP}2 are inherently not smooth; thus, smoothing essentially destroys their true characteristics. Further, while not inconsistent, the internal estimation of $d$ provided by the \ac{KSS} method is less stable than that of the \ac{Eup} estimator.
+ 
+The \ac{MSE} of $\hat{\beta}$ for the \ac{KSS} approach is distinctly higher than that of the other evaluated estimators, even surpassing the method introduced by \citet{bai2009panel} when $\hat{d} =8$. Among all methods, only the within estimator has a \ac{MSE} consistently exceeding that of \ac{KSS}. While performance increases with sample size, the method is still uncompetitive vis-à-vis the \ac{Eup} and infeasible estimators. This is primarily driven by a notable increase in the estimates' variance, which, for small samples, i.e., $n = 30$, is close to ten times larger than those of the other factor-based estimator. Moreover, statistical power sufferers substantially for smaller samples and remains below that of all other factor-based estimators.  In a pattern that is repeated across most simulation scenarios, the \ac{Eup} estimator consistently aligns itself between the two Bai methods, albeit it regularly gravitates closer to the performance of the infeasible estimator, particularly in settings with larger \( n \) and \( T \). 
 
 
 
-\subsection{Baseline scenario}
+
+The results concerning \ac{DGP}3 are shown in \Cref{DGP3}. The \ac{KSS} method demonstrates varying levels of \ac{MSE} for the time-varying individual effects across different sample sizes and time dimensions. Interestingly, whenever $T = 30$, the estimator performs poorly. This is partly due to significant inconsistencies in the factor dimension estimation. Specifications with a larger value for $T$ cause the dimensionality criterion developed by \citet{kneip2012new} to select $\hat{d} = 0$ for most repetitions. To test the extent to which this influences the drop in performance, I reassess the simulation where the factor dimension is known a priori for the \ac{KSS} estimator. The results of this exercise can be found in \Cref{exercise_sim}. Although performance does increase slightly, the problem largely persists. This could point to a \textit{blind spot} of the estimator, where the specific design of the \ac{DGP} causes the method to break. A further analysis of this issue could be the subject of future investigations. 
+
+Delving into the estimates for $\hat{\beta}$, \ac{Eup} again stands out and performs almost at par with the infeasible Bai estimator. In larger samples, the \ac{KSS} method approaches the execution of the former, albeit it remains less efficient in contrast to initial predictions. 
 
 
-\begin{table}[]
-\caption{DGP 1, homoskedastic errors}
+
+
+\Cref{DGP4} shows the results of the simulations where $\nu_{it}$ is time invariant. The \ac{KSS} estimator leads to overall smaller \ac{MSE} values for the effects. This may be driven by the fact that the true factors are indeed smooth. Moving on to the estimates for the common slope, the within estimator dominates the other considered methods as expected, although the \ac{KSS} and \ac{Eup} methods follow close behind. 
+
+
+
+\Cref{endo_sim} contains the outcomes of the simulations with endogenous regressors. The added complication that the effects are correlated with the second regressor does not affect the performance of the considered estimators. In fact, endogeneity slightly aids in the execution of the methods, particularly for estimating the time-varying individual effects in smaller samples. This effect is somewhat more pronounced for the \ac{KSS} estimator than the rest. This might be explained by the fact that endogeneity could inadvertently provide more information regarding the time-varying individual effects.
+
+
+\subsubsection{Other Specifications}
+
+The results for the simulations with heteroskedastic error terms are displayed in \Cref{heter_sim}. When heteroskedasticity in the time dimension exists (\Cref{hetero_sim_time}), the \ac{MSE} for the effects and the common slope parameters increase throughout, mainly due to inflation in the variance of the estimates. The estimators relying on stochastically bounded factors seem to suffer more in terms of efficiency than the \ac{KSS} approach, especially for the estimation of $\nu_{it}$. However, statistical power wanes significantly for the latter method in small samples. This phenomenon is particularly severe for \ac{DGP}2 and \ac{DGP}3. In contrast, the use of heteroskedasticity robust standard errors aids in retaining power for the rest of the factor-based estimators. 
+
+
+This trend continues in the case of heteroskedasticity in the cross-sectional dimension (\Cref{hetero_sim_i}). However, due to the specification of the error terms, performance in estimating the effects worsens whenever $n = 300$, as the increase in variation overpowers the positive impact of larger sample sizes. Interestingly, this is not the case for the existence of heteroskedasticity in the time dimension, as performance generally increases whenever $T = 30$. This could indicate that the estimation of the individual effects is more sensitive to heteroskedasticity in the cross-sectional dimension. The presence of both time and cross-sectional heteroskedasticity (\Cref{hetero_sim_both})  worsens overall performance and harms statistical power. However, the methods based on stochastically bounded factors retain power, especially for larger samples. 
+
+
+\Cref{autocorr_sim_results} displays the results of the simulations with serially correlated error terms. Weak serial correlation (\cref{autocorr_sim_results_weak}) leaves the results discussed in \Cref{homodiscuss} largely unchanged. While strongly autocorrelated errors hamper performance slightly and somewhat more for methods based on stochastically bounded factors, no significant distortions in efficiency are observed. It is possible that the factor structure already absorbs the introduced autocorrelation in the error terms, leading to an overall commendable performance.
+
+
+
+
+
+\section{Application: Democracy \textit{does} cause growth?}\label{application}
+
+
+The effect of democracy on material well-being has been a long-contested topic. \citet{barro1996democracy} argued that the impact of democracy on growth is weakly negative. \citet{tavares2001democracy} found that once indirect effects are accounted for, the direct effect of democracy on growth is negative. Further, \citet{doucouliagos2008democracy} applied a meta-regression analysis to estimates from 84 studies and concluded that democracy does not directly impact growth. Additionally, \citet{giavazzi2005economic} and \citet{murtin2014democratic} find no significant effects of democracy on income.  
+
+Nevertheless, several recent works have indeed found positive effects. For example, \citet{rodrik2005democratic}, \citet{persson2006democracy} and \citet{papaioannou2008democratisation} estimated positive effects of democracy on growth.  More recently, using a  fully dynamic panel estimation approach, \citet{acemoglu2019democracy} found large positive effects. The authors concluded that democratization causes a 20-25\% increase in long-run GDP. Further, \citet{chen2019mastering} revisit these estimates using sample-splitting methods and a balanced panel. The authors' results support the hypothesis in \citet{acemoglu2019democracy}.
+
+However, the validity estimations presented in \citet{acemoglu2019democracy} and \citet{chen2019mastering} hinges on the assumption that no time-varying omitted factors
+affect both GDP and democracy. To alleviate concerns regarding this assumption, \citet{acemoglu2019democracy} produced IV estimates that exploited regional waves of democratization and transitions to nondemocracy as a source of exogenous variation in democracy. The ensuing results aligned with the hypothesis of a  significant effect of democracy on growth.
+
+
+In this paper, I reassess the results of \cite{acemoglu2019democracy} using the factor-augmented panel data models studied above, which explicitly model unobserved time-varying factors. The idea behind this is that the observed effect of democracy on \ac{GDP} levels might indeed be driven by unobserved common factors which have heterogeneous impacts on different countries. Consequently, applying factor modeling in this context may dampen the existing relationship between democracy and \ac{GDP} or render it altogether insignificant. 
+
+The empirical analysis will be mainly carried out via the \ac{Eup} method proposed by \citet{bada2014parameter}. This choice is backed by the simulation studies presented in \Cref{simulation}, which showed a preference for this estimator. I further analyze the issue at hand using the use \ac{KSS} method developed by \citet{kneip2012new}.  The results of this additional exercise can be found in \Cref{kss_apendix}.
+ 
+\subsection{Data and Model Setup}
+
+Consider the dynamic model for \ac{GDP} levels described \citet{acemoglu2019democracy}:
+\begin{equation}\label{lag_gdp}
+ y_{it} = \beta D_{it} + \sum_{j=1}^P \gamma_j y_{it-j} + a_i + \xi_t  + \varepsilon_{it},
+\end{equation}
+where $y_{it}$ is the log of GDP per capita for country $i$ at time $t$, $D_{it}$ is the dichotomous democracy measure, and $a_{i}$ and $\xi_t$ denote country- and time-specific fixed effects, respectively. I further allow for non-constant individual effects $\nu_{it}$ as described in (\ref{factors}). Hence (\ref{lag_gdp}) becomes:
+\begin{equation}\label{lag_gdp_factor}
+ y_{it} = \beta D_{it} + \sum_{j=1}^P \gamma_j y_{it-j} + a_i + \xi_t + \nu_{it} + \varepsilon_{it}.
+\end{equation}
+I employ the balanced panel dataset constructed by \citet{chen2019mastering}, which is derived from the original unbalanced panel used by \citet{acemoglu2019democracy}. The data set includes the dichotomous democracy measure\footnote{Details on the construction of this measure are available in the online appendix to \citet{acemoglu2019democracy}.} developed by from \citet{acemoglu2019democracy}, which data from multiple sources, such as Freedom House and Polity IV, and deems a country democratic only if various sources categorize it in that manner, and the real \ac{GDP} per capita (in terms of 2000 USD)  from the World Bank Development Indicators \citep{world2012world}. The panel includes $n = 147$ countries and $T = 23$ years between 1987 and 2009. The dataset documents 51 shifts towards democracy and 22 regressions to nondemocracy. Additionally, it encompasses 58 nations that are consistently democratic and 35 that persistently remain nondemocratic\footnote{The complete list of countries included in the sample, as well the instances of democratizations and shifts back to nondemocracy are included in \Cref{data_apendix}. Furthermore, nations that consistently maintain either democratic or nondemocratic stances throughout the sample are also delineated there.}.   
+
+This data set importantly omits several nations once part of the Eastern Bloc, such as Poland, the Czech Republic, and the Russian Federation. The former Yugoslavia's successor states - Bosnia and Herzegovina, Croatia, Kosovo, Montenegro, North Macedonia, Serbia, and Slovenia - are also excluded. Nonetheless, the panel allows for Ukraine, Hungary, Albania, Romania, and other former (or current) communist states, such as China, Cuba, and Mongolia, to be included. Furthermore, the period covered includes several transitions that materialized during and after the decline of communism, such as those of the aforementioned Eastern Block countries, Latin America, East Asia, and Africa.
+
+Nonetheless, the use of a smaller balanced panel data set in this study could explain away any differences in the estimation of the effect of democracy on \ac{GDP} levels between this paper and the work of \citet{acemoglu2019democracy}. The limited time span considered and the omission of several nations that underwent a democratic transition in the last century might drive the estimates of the effect of democracy on \ac{GDP} levels downwards or render them altogether insignificant. To alleviate this concern, I first reproduce and extend on the classical-fixed effects estimation of (\ref{lag_gdp}) presented in \citet{chen2019mastering}, which is likewise derived from the work of \citet{acemoglu2019democracy}, albeit with the use a smaller data set. 
+
+
+
+\subsection{Additive Fixed Effects Estimates}
+
+Columns (i)-(iv) of \Cref{within_results} display the results of the classical two-way fixed effects estimation for $P = \{1,2,3,4\}$ lagged regressors, respectively. The estimated effects perfectly match those of \citet{chen2019mastering}. Even with a smaller balanced panel, the relationship between democracy and growth is positive and statistically significant across all considered specifications at the $1\%$ level. Further, the coefficients obtained are notably larger than those reported in \citet{acemoglu2019democracy}.  
+
+For later comparison, I also fit a transformed version (\ref{lag_gdp}) via the classical fixed effects estimator by taking the first differences of the observed time series $y_{it}$, which yields a dynamic panel regression of the growth rate of $y_{it}$ on the democracy measure:
+\begin{equation}\label{diff_lag_gdp}
+\Delta y_{it} = \beta D_{it} + \sum_{j=1}^P \eta_j \Delta y_{it-j} + a_i + \xi_t +  \varepsilon_{it}.
+\end{equation}
+\Cref{within_results_diff} presents the results of this estimation. Again, the coefficients for democracy are positive and significant at the $1\%$ level and larger than the equivalent estimates produced by \citet{acemoglu2019democracy}.
+
+These findings alleviate the initial concerns regarding using a smaller balanced panel on the produced estimates. Further, these results will serve as a benchmark against the factor model estimates. The explicit modeling of the unobserved factor structure is likely to drive any differences between the estimated coefficients between both approaches.
+
+
+
+\begin{table}[htb]
+\centering
+\caption{Two-Way Fixed Effects Estimates of the Effect of Democracy on \ac{GDP} per Capita 
+(Clustered Robust Standard Errors )}\label{within_results}
+\begin{tabular}{lcccc}
+\toprule
+                       & (i) & (ii) & (iii) & (iv) \\
+\midrule
+Democracy Index       & $0.0210^{**}$   & $0.0147^{**}$   & $0.0185^{**}$   & $0.0189^{**}$   \\
+                       & $(0.0066)$      & $(0.0052)$      & $(0.0060)$      & $(0.0064)$      \\
+ Log GDP, first lag    & $0.9264^{***}$ & $1.2606^{***}$ & $1.1867^{***}$ & $1.1532^{***}$ \\
+                       & $(0.0224)$      & $(0.0550)$      & $(0.0462)$      & $(0.0508)$      \\
+ Log GDP, second lag   & -          & $-0.3544^{***}$ & $-0.1242^{*}$  & $-0.1174^{*}$   \\
+                       & -          & $(0.0543)$     & $(0.0487)$     & $(0.0577)$     \\
+Log GDP, third lag     & -          & -          & $-0.1724^{***}$ & $-0.0707^{\cdot}$ \\
+                       & -          & -          & $(0.0284)$     & $(0.0416)$     \\
+ Log GDP, fourth lag   & -          & -          & -          & $-0.0829^{***}$ \\
+                       & -          & -          & -          & $(0.0248)$      \\
+\midrule
+$R^2$                 & $0.9074$    & $0.9123$    & $0.9057$    & $0.8992$    \\
+  Adjusted  $R^2$      & $0.9023$    & $0.9072$    & $0.8999$    & $0.8927$    \\
+\bottomrule
+\multicolumn{5}{l}{Signif. codes: $^{***}$p$<0.001$; $^{**}$p$<0.01$; $^{*}$p$<0.05$; $^{\cdot}$p$<0.1$}
+\end{tabular}
+\end{table}
+
+
+
+
+\begin{table}[hbt]
+\caption{Two-Way Fixed Effects Estimates of the Effect of Democracy on \ac{GDP} per Capita Growth
+(Clustered Robust Standard Errors )}\label{within_results_diff}
+\centering
+\begin{tabular}{lcccc}
+\toprule
+                       & (i) & (ii) & (iii) & (iv) \\
+\midrule
+Democracy Index        & $0.0226^{**}$ & $0.0195^{**}$ & $0.0192^{**}$ & $0.0172^{**}$   \\
+                       & $(0.0074)$    & $(0.0062)$    & $(0.0064)$    & $(0.0066)$      \\
+$\Delta$ Log GDP, lag 1 & $0.9144^{***}$ & $1.2541^{***}$ & $1.1700^{***}$ & $1.1441^{***}$  \\
+                       & $(0.0269)$    & $(0.0571)$    & $(0.0480)$    & $(0.0518)$      \\
+$\Delta$ Log GDP, lag 2 & -             & $-0.3541^{***}$ & $-0.1061^{\cdot}$  & $-0.1102^{*}$   \\
+                       & -             & $(0.0560)$    & $(0.0549)$    & $(0.0552)$      \\
+$\Delta$ Log GDP, lag 3 & -             & -             & $-0.1751^{***}$ & $-0.0805^{\cdot}$ \\
+                       & -             & -             & $(0.0314)$    & $(0.0419)$      \\
+$\Delta$ Log GDP, lag 4 & -             & -             & -             & $-0.0827^{***}$ \\
+                       & -             & -             & -             & $(0.0251)$      \\
+\midrule
+$R^2$                 & $0.8984$    & $0.9024$    & $0.8984$    & $0.8907$    \\
+Adjusted  $R^2$       & $0.8925$    & $0.8965$    & $0.8919$    & $0.8833$    \\
+\bottomrule
+\multicolumn{5}{l}{Signif. codes: $^{***}$p$<0.001$; $^{**}$p$<0.01$; $^{*}$p$<0.05$; $^{\cdot}$p$<0.1$}
+\end{tabular}
+\end{table}
+
+
+
+
+
+\subsection{Factor Model Estimates }\label{main_estimates}
+
+
+To test the hypothesis presented earlier in this section, I estimate a transformed version of (\ref{lag_gdp_factor}) via the Eup method by taking the first differences of the observed time series $y_{it}$ to account for non-stationary factors:
+\begin{equation}\label{diff_lag_gdp}
+\Delta y_{it} = \beta D_{it} + \sum_{j=1}^P \eta_j \Delta y_{it-j} + a_i + \xi_t + v_{it} + \varepsilon_{it}.
+\end{equation}
+ I use a time-dimensional heteroskedasticity and serial correlation robust variance-covariance matrix for the ensuing analysis, corresponding to specification  \ref{error.type5} in \Cref{bai.limiting}. I use the PC1 criterion detailed in \citet{bai2002determining} for the factor dimension estimation. As a robustness check, I also estimate (\ref{diff_lag_gdp}) via the IPC1-3 criteria, which collectively yield $\hat{d} = 0$ for all specifications. This indicates that no non-stationary factors could be found in the data. I further test for common factors beyond classical additive effects using a modified version of the dimensionality criterion proposed by \citet{kneip2012new} as described in \citet{bada2012phtt}. I reject the null hypothesis in all specifications that the true stationary factor dimension $d = 0$  with a $1\%$ significance level. 
+
+
+Columns (i)--(iv) of \Cref{eup_results} display the results of the first estimation using the PC1 criterion for \( P = \{1,2,3,4\} \) lagged regressors. For \( P = \{2,3,4\} \), the estimate for the dimension of the common factor is \( \hat{d} = 4 \), while for \( P = 1 \), the estimate is \( \hat{d} = 5 \).
+The estimates for the factor dimension Regressions (i) - (iii) show small and insignificant effects of democracy on \ac{GDP} per capita growth. Indeed, the coefficients are close to one order of magnitude smaller than those in \Cref{within_results_diff}. Further, the regression with $P = 4$ lagged regressors yields a small, negative, statistically insignificant coefficient for democracy.
+
+\Cref{tab:variance} delineates the variance shares of the estimated four common factors in explaining the total variance of \( v_{it} \) in regression (iv). The first factor, \( \hat{f}_{1t} \), significantly dominates by accounting for 66.65\% of the variance, followed by the others with diminishing shares. These results once again evoke the connection between the estimators studied earlier and the principal component analysis method. The estimated common factors and factor structure can be further examined in \Cref{fig:image1}.
+
+
+\begin{table}[htb]
+\centering
+\captionsetup{justification=centering}
+\caption{Factor Model Estimates of the Effect of Democracy on \ac{GDP} per capita growth \\
+(\acs{Eup} Method, Robust Standard Errors)}\label{eup_results}
+\begin{tabular}{lcccc}
+\hline
+                       & (i)       & (ii)       & (iii)       & (iv)      \\
+\hline
+Democracy Index                    & $0.0033$   & $0.0038$   & $0.0035$   & $-0.0020$   \\
+                       & $(0.0022)$   & $(0.0026)$   & $(0.0031)$   & $(0.0036)$   \\
+$\Delta$ Log GDP, first lag      & $0.1360^{***}$   & $0.0458$     & $-0.4010^{***}$    & $-0.5710^{***}$    \\
+                       & $(0.0300)$   & $(0.0354)$   & $(0.0445)$   & $(0.0456)$   \\
+$\Delta$ Log GDP, second lag     & -         & $-0.0337$    & $-0.3600^{***}$   & $-0.5610^{***}$    \\
+                       & -         & $(0.0323)$   & $(0.0382)$   & $(0.0466)$   \\
+$\Delta$ Log GDP, third lag     & -         & -          & $-0.2240^{***}$    & $-0.4230^{***}$    \\
+                       & -         & -          & $(0.0238)$   & $(0.0300)$   \\
+$\Delta$ Log GDP, fourth lag      & -         & -          & -          & $-0.2830^{***}$    \\
+                       & -         & -          & -          & $(0.0242)$   \\
+\hline
+Estimated Factor Dimension    & $5$    & $4$    & $4$    & $4$    \\
+$R^2$              & $0.7483$     & $0.7229$     & $0.7519$    & $0.7958$    \\
+\hline
+\multicolumn{5}{l}{Signif. codes: $^{***}$p$<0.001$; $^{**}$p$<0.01$; $^{*}$p$<0.05$; $^{\cdot}$p$<0.1$}\\
+\end{tabular}
+\end{table}
+
+
+\begin{table}[hbt]
+  \caption{Variance shares of the common factors \\
+  (\ac{Eup} Method)}
+  \centering
+  \begin{tabular}{cc}
+    \hline 
+    Common factor & Share of total variance of \( v_{it} \) \\
+    \hline 
+    \( \hat{f}_{1t} \) & 66.65\% \\
+    \( \hat{f}_{2t} \) & 21.10\% \\
+    \( \hat{f}_{3t} \) & 7.78\% \\
+    \( \hat{f}_{4t} \) & 4.47\% \\
+    \hline
+  \end{tabular}
+  \label{tab:variance}
+\end{table}
+
+
+\begin{figure}[htb]
+  \caption{Estimated Common Factors and Factor-Structure \\
+  (\ac{Eup} Method)}
+  \centering
+  \includegraphics[width=\textwidth]{Images/eup_factors_reduced.png}
+  \label{fig:image1}
+\end{figure}
+
+
+\subsection{Robustness}
+
+\subsubsection{Boostrap-Regression Analysis}
+
+While the estimation procedure in \Cref{main_estimates} accounts for serial correlation and heteroskedasticity in the time dimension, it may not fully capture all the intricacies of the underlying data-generating process. To address any residual concerns related to misspecification I run a country-level clustered non-parametric bootstrap regression analysis, focusing on the preferred specification with $P = 4$ lagged regressors. This method produces cluster-robust standard errors, enhancing the precision of the analysis. For the bootstrap exercise, I set the number of replications to $10,000$. The estimation of factor dimension is done through the PC1 criterion across all replications. 
+
+\Cref{eup_results_boostrap} displays the results of the bootstrap-regression analysis for the democracy variable, while \Cref{fig:image2} displays the histogram plot and smoothed density for the bootstrap coefficients for democracy.  The full results of the exercise can be viewed in \Cref{eup_apendix}.  Reassuringly, the bootstrap standard errors are of the same order of magnitude and indeed quite close to the ones shown in \Cref{eup_results}. Further, the median of the bootstrap coefficients for the democracy variable lies quite close to the original estimates in the same table.
+This speaks for the robustness of the specification used in \Cref{main_estimates}. 
+
+
+The computed 95\% \ac{CI} —encompassing normal, percentile, and bias-corrected and accelerated (BCa) approaches— for the democracy measure collectively encapsulate 0. This indicates that the effect of democracy on GDP is not statistically singificant at the $5\%$ level. 
+
+
+\begin{table}[htb]
+\caption{Effect of Democracy on GDP per capita growth: \\
+(\ac{Eup} method, Bootstrap-Regression Analysis)}
+\label{eup_results_boostrap}
+\small
+\centering
+\begin{tabular}{cc}
+\hline
+Statistic & Democracy \\
+\hline 
+Original Estimate & -0.0020 \\
+Bias & 0.0008 \\
+Bootstrap Standard Error & 0.0046 \\
+Normal 95\% CI & (-0.0118, 0.0062) \\
+Percentile 95\% CI & (-0.0107, 0.0074) \\
+BCa 95\% CI & (-0.0127, 0.0056) \\
+\hline
+\end{tabular}
+\end{table}
+
+
+\begin{figure}[htb]
+  \caption{Histogram and Density Plot of Bootstrap Regression Coefficients for Democracy \\
+  (\ac{Eup} method)}
+  \centering
+  \includegraphics[width=\textwidth]{Images/hist_eup.png}
+  \label{fig:image2}
+\end{figure}
+
+
+\subsubsection{Size of the Democracy Coefficient}
+
+The results presented above provide evidence that the effect of democracy on \ac{GDP} growth is notably small and  non-significant. Though the lack of statistical significance might suggest that this effect is negligible, further investigation is warranted. Specifically, it is of particular interest to determine if the observed coefficient is sufficiently small to render its impact on growth inconsequential for practical purposes.
+
+I investigate this issue by conducting a one-sided hypothesis test. The objective is to determine whether the observed coefficient falls significantly below a threshold set at $25 \%$ of the estimated coefficient in column (iv) of \Cref{within_results_diff}. Formally, the null and alternative hypotheses can be written as:
+\begin{align*}
+H_0 &: \beta \geq \beta_U \\
+H_1 &: \beta < \beta_U
+\end{align*}
+With $\beta_U = \frac{1}{4} \times 0.0172 \approx 0.0043$. The results of the one-sided test are shown in \Cref{tab:test}. I reject the null hypothesis at the $5\%$ significance level that the effect of democracy on growth is at least $\beta_U$. This provides further evidence that once the unobserved factor structure is explicitly accounted for in the estimation procedure, the effect of democracy on growth is substantially diminished and potentially less influential than previously believed.
+
+\begin{table}[htb]
+    \caption{One-sided Hypothesis Test Results for the Effect of Democracy on GDP Growth \\
+    (\ac{Eup} Method)}\label{tab:test}
+    \centering
+    \begin{tabular}{cc}
+        \hline
+        Statistic & Original Specification  \\
+        \hline
+        Coefficient Estimate & $-0.0020$\\
+        Standard Error & 0.0036 \\
+        $z$-value & $-1.77565$ \\
+        $p$-value & 0.0379 \\
+        $\text{OSCI}_{95}$  for $\beta$ & $]-\infty, 0.0038]$ \\
+        \hline
+    \end{tabular}
+
+    \label{tab:results}
+\end{table}
+
+
+\section{Conclusion}
+
+In this dissertation, I provide a comparative study of the methods proposed by \citet{bai2009panel}, \citet{kneip2012new} and \citet{bada2012phtt}. The theoretical underpinnings of the considered estimations are discussed thoroughly, and Monte Carlo simulations provide new insights into the finite sample performance of the estimators under varying conditions. The \ac{Eup} estimator emerges as the preferred approach and shows a good performance overall. In contrast, the \ac{KSS} estimator produces mixed results, as the method performs poorly whenever the unknown factors aren't smooth. As expected, the effectiveness of the method advanced by \citet{bai2009panel} relies on accurately estimating the factor dimension externally. Additionally, the results indicate that explicitly modeling the factor structure can mitigate inefficiencies otherwise introduced by including autocorrelated error terms. 
+
+One of this dissertation's key contributions lies in its application of factor-based methods to study the relationship between democracy and \ac{GDP} growth. By revisiting the findings of \citet{acemoglu2019democracy} and \citet{chen2019mastering} through the estimators studied through this work,  I show the explicit modeling of the unobserved factor structure reveals a small and statistically insignificant effect of democracy on \ac{GDP} growth. This warrants a further discussion of the issue and draws attention to the validity of the assumption of previous studies. 
+
+In summation, this work underscores the importance of factor-based estimation strategies in enhancing the precision and reliability of econometric analyses in the presence of unobserved heterogeneity. Further developments in this direction could help disentangle and solve previously obscured relationships, offering clearer insights into the nuanced dynamics of socio-economic phenomena.
+
+
+
+\clearpage
+
+
+\addcontentsline{toc}{section}{References}
+\thispagestyle{plainfancy}
+\bibliography{bibliograpy.bib}
+
+
+\begin{appendix}
+\addcontentsline{toc}{section}{Appendices}
+    %\pagenumbering{roman}
+    \setcounter{table}{0}
+\renewcommand{\thetable}{A\arabic{table}}
+
+\section{Monte Carlo Simulation Results}\label{monte_carlo_appendix}
+\thispagestyle{plainfancy}
+\setlength\tabcolsep{3.4pt}
+
+\subsection{Homoskedastic Errors with Exogenous Regressors}\label{homo_sim_results}
+\begin{table}[b!]
+\caption{Monte Carlo simulation results for \ac{DGP}1}\label{DGP1}
+    \small
     \centering
  \input{Tables/tableK1_b.tex}
 \end{table}
-    
-\begin{table}[]
-\caption{DGP 2, homoskedastic errors}
+
+\begin{table}[b]
+\caption{Monte Carlo simulation results for \ac{DGP}2} \label{DGP2}
+      \small
     \centering
  \input{Tables/tableK2_b.tex}
 \end{table}
 
-
-\begin{table}[]
-\caption{DGP 3, homoskedastic errors}
+\begin{table}[htb]
+\caption{Monte Carlo simulation results for \ac{DGP}3}\label{DGP3}
+      \small
     \centering
  \input{Tables/tableK3_b.tex}
 \end{table}
 
-
-\begin{table}[]
-\caption{DGP 4, homoskedastic errors}
+\begin{table}[htb]
+\caption{Monte Carlo simulation results for \ac{DGP}4}\label{DGP4}
+      \small
     \centering
  \input{Tables/tableK4_b.tex}
 \end{table}
 
+\clearpage
 
-\begin{table}[]
-\caption{DGP 5, homoskedastic errors}
+\subsubsection{Homoskedastic Errors with Exogenous Regressors, \acs{KSS} Approach with Known Dimension}\label{exercise_sim}
+
+\begin{table}[htb]
+\caption{Monte Carlo simulation results for \ac{DGP}3}
+     \small
     \centering
- \input{Tables/tableE1_b.tex}
+ \input{Tables/tableK3_KSSdim}
 \end{table}
 
-\subsection{Heteroskedastic error terms}
+\clearpage
 
+\subsection{Homoskedastic Error Terms with Endogenous Regressors}\label{endo_sim}
 
-\begin{table}[]
-\caption{DGP 1, heteroskedastic errors}
+\begin{table}[htb]
+\caption{Monte Carlo simulation results for \ac{DGP}1}
+    \small
     \centering
- \input{Tables/tableK1_hetero.tex}
+ \input{Tables/tableK1_bT.tex}
 \end{table}
     
-\begin{table}[]
-\caption{DGP 2, heteroskedastic errors}
+\begin{table}[htb]
+\caption{Monte Carlo simulation results for \ac{DGP}2}
+      \small
     \centering
- \input{Tables/tableK2_hetero.tex}
+ \input{Tables/tableK2_bT.tex}
 \end{table}
 
 
-\begin{table}[]
-\caption{DGP 3, heteroskedastic errors}
+\begin{table}[htb]
+\caption{Monte Carlo simulation results for \ac{DGP}3}
+      \small
     \centering
- \input{Tables/tableK3_hetero.tex}
+ \input{Tables/tableK3_bT.tex}
 \end{table}
 
 
-\begin{table}[]
-\caption{DGP 4,heteroskedastic errors}
+\begin{table}[htb]
+\caption{Monte Carlo simulation results for \ac{DGP}4}
+     \small
     \centering
- \input{Tables/tableK4_hetero.tex}
+ \input{Tables/tableK4_bT.tex}
+\end{table}
+
+\clearpage 
+
+
+\clearpage
+
+\subsection{Heteorskedastic Error Terms}\label{heter_sim}
+
+\subsubsection{Heteroskedastic error terms in the time dimension}\label{hetero_sim_time}
+
+
+\begin{table}[htb]
+\caption{Monte Carlo simulation results for \ac{DGP}1}
+      \small
+    \centering
+ \input{Tables/tableK1_hetero_time.tex}
+\end{table}
+    
+\begin{table}[htb]
+\caption{Monte Carlo simulation results for \ac{DGP}2}
+      \small
+    \centering
+ \input{Tables/tableK2_hetero_time.tex}
 \end{table}
 
 
-\begin{table}[]
-\caption{DGP 5, heteroskedastic errors}
+\begin{table}[htb]
+\caption{Monte Carlo simulation results for \ac{DGP}3}
+      \small
     \centering
- \input{Tables/tableE1_hetero.tex}
+ \input{Tables/tableK3_hetero_time.tex}
 \end{table}
 
-\subsection{Weakly autocrorrelated error terms}
+
+\begin{table}[htb]
+\caption{Monte Carlo simulation results for \ac{DGP}4}
+      \small
+    \centering
+ \input{Tables/tableK4_hetero_time.tex}
+\end{table}
 
 
-\begin{table}[]
-\caption{DGP 1, weakly autocorrelated errors}
+\clearpage
+
+\subsubsection{Heteroskedastic error terms in the cross-sectional dimension}\label{hetero_sim_i}
+
+
+\begin{table}[htb]
+\caption{Monte Carlo simulation results for \ac{DGP}1}
+      \small
+    \centering
+ \input{Tables/tableK1_hetero_individual.tex}
+\end{table}
+    
+\begin{table}[htb]
+\caption{Monte Carlo simulation results for \ac{DGP}2}
+     \small
+    \centering
+ \input{Tables/tableK2_hetero_individual.tex}
+\end{table}
+
+
+\begin{table}[htb]
+\caption{Monte Carlo simulation results for \ac{DGP}3}
+      \small
+    \centering
+ \input{Tables/tableK3_hetero_individual.tex}
+\end{table}
+
+
+\begin{table}[htb]
+\caption{Monte Carlo simulation results for \ac{DGP}4}
+      \small
+    \centering
+ \input{Tables/tableK4_hetero_individual.tex}
+\end{table}
+
+
+
+\clearpage
+\subsubsection{Heteroskedastic error terms in both cross-sectional and time dimensions}\label{hetero_sim_both}
+
+
+\begin{table}[htb]
+\caption{Monte Carlo simulation results for \ac{DGP}1}
+      \small
+    \centering
+ \input{Tables/tableK1_hetero_both.tex}
+\end{table}
+    
+\begin{table}[htb]
+\caption{Monte Carlo simulation results for \ac{DGP}2}
+      \small
+    \centering
+ \input{Tables/tableK2_hetero_both.tex}
+\end{table}
+
+
+\begin{table}[htb]
+\caption{Monte Carlo simulation results for \ac{DGP}3}
+      \small
+    \centering
+ \input{Tables/tableK3_hetero_both.tex}
+\end{table}
+
+
+\begin{table}[htb]
+\caption{Monte Carlo simulation results for \ac{DGP}4}
+      \small
+    \centering
+ \input{Tables/tableK4_hetero_both.tex}
+\end{table}
+
+
+\clearpage
+\subsection{Autocorrelated Errors}\label{autocorr_sim_results}
+
+\subsubsection{Weakly Autocrorrelated Errors}\label{autocorr_sim_results_weak}
+
+\begin{table}[htb]
+\caption{Monte Carlo simulation results for \ac{DGP}1}
+      \small
     \centering
  \input{Tables/tableK1_autocorr_low.tex}
 \end{table}
     
-\begin{table}[]
-\caption{DGP 2, weakly autocorrelated errors}
+\begin{table}[htb]
+\caption{Monte Carlo simulation results for \ac{DGP}2}
+      \small
     \centering
  \input{Tables/tableK2_autocorr_low.tex}
 \end{table}
 
 
-\begin{table}[]
-\caption{DGP 3, weakly autocorrelated errors}
+\begin{table}[htb]
+\caption{Monte Carlo simulation results for \ac{DGP}3}
+      \small
     \centering
  \input{Tables/tableK3_autocorr_low.tex}
 \end{table}
 
 
-\begin{table}[]
-\caption{DGP 4,  weakly autocorrelated errors}
+\begin{table}[htb]
+\caption{Monte Carlo simulation results for \ac{DGP}4}
+      \small
     \centering
  \input{Tables/tableK4_autocorr_low.tex}
 \end{table}
 
 
-\begin{table}[]
-\caption{DGP 5,  weakly autocorrelated errors}
-    \centering
- \input{Tables/tableE1_autocorr_low.tex}
-\end{table}
+\clearpage
+
+\subsubsection{Strongly Autocorrelated Errors}\label{autocorr_sim_results_strong}
 
 
-\subsection(Strongly autocrorrelated error terms}
-
-
-\begin{table}[]
-\caption{DGP 1, strongly autocorrelated errors}
+\begin{table}[htb]
+\caption{Monte Carlo simulation results for \ac{DGP}1}
+      \small
     \centering
  \input{Tables/tableK1_autocorr_high.tex}
 \end{table}
     
-\begin{table}[]
-\caption{DGP 2, strongly autocorrelated errors}
+\begin{table}[htb]
+\caption{Monte Carlo simulation results for \ac{DGP}2}
+      \small
     \centering
  \input{Tables/tableK2_autocorr_high.tex}
 \end{table}
 
 
-\begin{table}[]
-\caption{DGP 3, strongly autocorrelated errors}
+\begin{table}[htb]
+\caption{Monte Carlo simulation results for \ac{DGP}3}
+      \small
     \centering
  \input{Tables/tableK3_autocorr_high.tex}
 \end{table}
 
 
-\begin{table}[]
-\caption{DGP 4,  strongly autocorrelated errors}
+\begin{table}[htb]
+\caption{Monte Carlo simulation results for \ac{DGP}4}
+      \small
     \centering
  \input{Tables/tableK4_autocorr_high.tex}
 \end{table}
 
 
-\begin{table}[]
-\caption{DGP 5,  strongly autocorrelated errors}
-    \centering
- \input{Tables/tableE1_autocorr_high.tex}
+
+\clearpage
+\section{Data Appendix}\label{data_apendix}
+\thispagestyle{plainfancy}
+
+\setcounter{table}{0}
+\renewcommand{\thetable}{B\arabic{table}}
+
+
+
+
+\begin{table}[h!]
+    \caption{Countries included in the estimation of model (\ref{diff_lag_gdp})}\label{dynamic_list_countries}
+\centering
+\begin{tabular}{l l l}
+\hline
+Country & Country & Country \\
+\hline
+Angola & Australia & Benin \\
+Albania & Austria & Burkina Faso \\
+Argentina & Burundi & Bangladesh \\
+Antigua and Barbuda & Belgium & Bulgaria \\
+Bahamas & Belize & Bolivia \\
+Brazil & Bhutan & Central African Rep. \\
+Barbados & Botswana & Canada \\
+Brunei Darussalam & Côte d'Ivoire & Chile \\
+Cyprus & Congo, Republic of & Comoros \\
+Dominica & Algeria & Dominican Republic \\
+Ecuador & Spain & Estonia \\
+Ethiopia & Fiji & Gabon \\
+United Kingdom & Ghana & Gambia, The \\
+Guinea-Bissau & Equatorial Guinea & Greece \\
+Grenada & Guyana & Hungary \\
+Indonesia & Ireland & Iceland \\
+Israel & Jamaica & Japan \\
+Kenya & Kiribati & St. Kitts and Nevis \\
+Korea & Liberia & Sri Lanka \\
+Lesotho & Latvia & Morocco \\
+Moldova & Mexico & Mali \\
+Malta & Mongolia & Mozambique \\
+Mauritania & Malawi & Malaysia \\
+Niger & Nicaragua & Netherlands \\
+Norway & Nepal & New Zealand \\
+Oman & Pakistan & Panama \\
+Philippines & Portugal & Paraguay \\
+Romania & Saudi Arabia & Sudan \\
+Singapore & El Salvador & Suriname \\
+Slovak Republic & Swaziland & Seychelles \\
+Syrian Arab Republic & Togo & Thailand \\
+Tajikistan & Turkmenistan & Tonga \\
+Trinidad and Tobago & Uganda & Ukraine \\
+Uruguay & United States & Uzbekistan \\
+St. Vincent \& Grens. & Venezuela, Rep. Bol. & Vietnam \\
+Vanuatu & South Africa & Congo, Dem. Rep. of \\
+Zambia & Zimbabwe & \\
+\hline
+\end{tabular}
 \end{table}
 
 
-\section{Application}
 
-\documentclass{article}
-\usepackage{booktabs}
-
-\begin{document}
-
-\begin{table}[ht]
+\begin{table}[h!]
+    \caption{Transitions to Democracy in the Sample}\label{demo}
 \centering
-\caption{Testing the Presence of Interactive Effects - Test of Kneip, Sickles, and Song (2012)}
-\label{tab:interactive_effects}
+\begin{tabular}{c c c c c c}
+\hline
+Country & Year & Country & Year & Country & Year \\
+\hline
+Albania & 1992 & Bangladesh & 1991 & Benin & 1991 \\
+Albania & 1997 & Bangladesh & 2009 & Bhutan & 2008 \\
+Bulgaria & 1991 & Burundi & 2003 & Cote d'Ivoire & 2000 \\
+Cape Verde & 1991 & Central African Rep. & 1993 & Chile & 1990 \\
+Comoros & 1990 & Comoros & 1996 & Comoros & 2002 \\
+Congo, Republic of & 1992 & Estonia & 1992 & Ethiopia & 1995 \\
+Fiji & 1990 & Georgia & 1995 & Ghana & 1996 \\
+Guinea-Bissau & 1994 & Guinea-Bissau & 1999 & Guinea-Bissau & 2005 \\
+Guyana & 1992 & Hungary & 1990 & Indonesia & 1999 \\
+Kenya & 2002 & Kyrgyz Republic & 2005 & Latvia & 1993 \\
+Lesotho & 1993 & Lesotho & 1999 & Liberia & 2004 \\
+Madagascar & 1993 & Malawi & 1994 & Mali & 1992 \\
+Mauritania & 2007 & Mexico & 1997 & Moldova & 1994 \\
+Mongolia & 1993 & Mozambique & 1994 & Nepal & 1991 \\
+Nepal & 2006 & Nicaragua & 1990 & Niger & 1991 \\
+Niger & 1999 & Nigeria & 1999 & Pakistan & 2008 \\
+Panama & 1994 & Paraguay & 1993 & Peru & 1993 \\
+Romania & 1990 & Senegal & 2000 & Sierra Leone & 1996 \\
+Sierra Leone & 2001 & Slovak Republic & 1993 & South Africa & 1994 \\
+Suriname & 1991 & Thailand & 1992 & Thailand & 2008 \\
+Ukraine & 1994 & Zambia & 1991 & & \\
+\hline
+\end{tabular}
+\end{table}
+
+
+\begin{table}[h!]
+    \caption{Reversals to Nondemocracy in the Sample}\label{nondemo}
+\centering
+\begin{tabular}{c c c c c c}
+\hline
+Country & Year & Country & Year & Country & Year \\
+\hline
+Albania & 1996 & Bangladesh & 2007 & Côte d'Ivoire & 2002 \\
+Central African Rep. & 2003 & Comoros & 1995 & Comoros & 1999 \\
+Congo, Republic of & 1997 & Fiji & 2006 & Gambia, The & 1994 \\
+Guinea-Bissau & 1998 & Guinea-Bissau & 2003 & Kyrgyz Republic & 2009 \\
+Lesotho & 1998 & Madagascar & 2009 & Mauritania & 2008 \\
+Nepal & 2002 & Niger & 1996 & Niger & 2009 \\
+Pakistan & 1999 & Peru & 1992 & Sierra Leone & 1997 \\
+Sudan & 1989 & Suriname & 1990 & Thailand & 1991 \\
+Thailand & 2006 & Venezuela, Rep. Bol. & 2009 & & \\
+\hline
+\end{tabular}
+\end{table}
+
+\begin{table}[h!]
+  \caption{Countries Democratic for All Years in the Sample}\label{demo_perm}
+\centering
+\begin{tabular}{l l l}
+\hline
+Country & Country & Country \\
+\hline
+Antigua and Barbuda & Australia & Belize \\
+Argentina & Austria & Bolivia \\
+Bahamas & Barbados & Botswana \\
+Belgium & Brazil & Colombia \\
+Belize & Canada & Costa Rica \\
+Bolivia & Cyprus & Dominican Republic \\
+Botswana & Denmark & Ecuador \\
+Brazil & Dominica & El Salvador \\
+Canada & Finland & Greece \\
+Colombia & France & Grenada \\
+Costa Rica & Germany & Guatemala \\
+Cyprus & Honduras & India \\
+Denmark & Iceland & Ireland \\
+Dominica & Israel & Jamaica \\
+Dominican Republic & Italy & Japan \\
+Ecuador & Kiribati & Luxembourg \\
+El Salvador & Korea & Malta \\
+Finland & Mauritius & Netherlands \\
+France & New Zealand & Papua New Guinea \\
+Germany & Norway & Philippines \\
+Greece & Portugal & St. Kitts and Nevis \\
+Grenada & Spain & St. Lucia \\
+Guatemala & Sri Lanka & St. Vincent \& Grens. \\
+Honduras & Sweden & Switzerland \\
+Iceland & Trinidad and Tobago & United Kingdom \\
+India & Turkey & United States \\
+Ireland & Uruguay & Vanuatu \\
+\hline
+\end{tabular}
+\end{table}
+
+\begin{table}[h!]
+  \caption{Countries Nondemocratic for All Years in the Sample}\label{nondemo_perm}
+\centering
+\begin{tabular}{l l l}
+\hline
+Country & Country & Country \\
+\hline
+Algeria & Burkina Faso & Congo, Dem. Rep. of \\
+Angola & Cameroon & Cuba \\
+Brunei Darussalam & Chad & Egypt \\
+China & Equatorial Guinea & Guinea \\
+Gabon & Iran, I.R. of & Lao People's Dem.Rep \\
+Jordan & Malaysia & Morocco \\
+Oman & Rwanda & Samoa \\
+Saudi Arabia & Seychelles & Singapore \\
+Swaziland & Syrian Arab Republic & Tajikistan \\
+Togo & Tonga & Tunisia \\
+Turkmenistan & Uganda & Uzbekistan \\
+Vietnam & Zimbabwe & \\
+\hline
+\end{tabular}
+\end{table}
+
+
+
+\clearpage
+
+
+\section{Supplementary Results to the Empirical Application}\label{application_apendix}
+\thispagestyle{plainfancy}
+
+\setcounter{table}{0}
+\setcounter{figure}{0}
+\renewcommand{\thetable}{C\arabic{table}}
+\renewcommand{\thefigure}{C\arabic{figure}}
+
+
+\subsection{Boostrap-Regression Analysis via the KSS method}\label{kss_apendix}
+
+I further fit (\ref{lag_gdp}) using the KSS method with the preferred specification of $P = 4$ lagged regressors. Although the simulation results presented in \Cref{simulation} showed that the method generally performs adequately in the presence of serial correlation, the estimation procedure proposed by \citet{kneip2012new} still relies on the assumption of \ac{iid} errors (\Cref{asymptotics}).  
+
+I run a country-level clustered non-parametric bootstrap regression analysis to obtain cluster robust standard errors. For the bootstrap exercise, I set the number of replications to 10,000. The algorithm described by \citet{bada2012phtt} is used to estimate the smoothing parameter $\kappa$, providing a computationally efficient approach. To account for inconsistent factor dimension estimation in the KSS method in the case of weakly correlated factors, I consider PC1-3 and IPC1-3 criteria presented in \citet{bai2002determining} for an initial naive estimation using the \ac{KSS} method. With the sole exception of IPC3, which results in $\hat{d} = 3$, all the other selected criteria lead to an estimation of $\hat{d} = 4$. The latter value is then fixed for all following bootstrap regressions.
+
+\Cref{kss_results_a1} shows the naive estimation results obtained through the \ac{KSS} method on which the factor dimension estimation is performed. These results are a benchmark for the far more robust bootstrap regression analysis. The initial estimates align with observations made in \Cref{application}. The variance share of the estimated common factors is presented in \Cref{tab:variance_appendix}, while \Cref{fig:image4} displays the estimated factor structure. A comparison with \Cref{fig:image1} can aid in understanding the effect of spline smoothing in estimating the time-varying effects. 
+
+ \Cref{fig:image5} displays a histogram of the bootstrap estimates for the democracy coefficient. The results of the bootstrap regression analysis (\Cref{tab:full_table}) further reinforce the findings in \Cref{application}. All computed 95\% \ac{CI} methods for the democracy measure converge around 0, indicating its effect on \ac{GDP} levels isn't significant at the $5\%$ level. 
+
+
+\begin{table}[htb]
+\centering
+\captionsetup{justification=centering}
+\caption{Factor Model Estimates of the Effect of Democracy on GDP per capita \\
+(\acs{KSS} method) } \label{kss_results_a1}
 \begin{tabular}{lcccc}
-\toprule
-Test-Statistic & p-value & crit.-value & sig.-level \\
-\midrule
-38.49 & 0.00 & 2.33 & 0.01 \\
-\bottomrule
+\hline
+& Estimate & Std. Error & z-value & Pr(>z) \\
+\hline
+Democracy Index & $-0.0017$ & $0.0063$ & $-0.269$ & $0.788$ \\
+$\Delta$ Log GDP, first lag & $-0.1870^{***}$ & $0.0219$ & $-8.580$ & $<0.001$ \\
+$\Delta$ Log GDP, second lag & $-0.2240^{***}$ & $0.0197$ & $-11.400$ & $<0.001$ \\
+$\Delta$ Log GDP, third lag & $-0.1330^{***}$ & $0.0191$ & $-6.970$ & $<0.001$ \\
+$\Delta$ Log GDP, fourth lag & $-0.1160^{***}$ & $0.0199$ & $-5.800$ & $<0.001$ \\
+\hline
+Estimated Factor Dimension & \multicolumn{4}{l}{$4$} \\
+\( R^2 \) & \multicolumn{4}{l}{-59.3} \\
+\hline
+\multicolumn{5}{l}{Signif. codes: $^{***}$p$<0.001$; $^{**}$p$<0.01$; $^{*}$p$<0.05$; $^{\cdot}$p$<0.1$}\\
 \end{tabular}
 \end{table}
 
-\begin{table}[ht]
+
+\begin{table}[]
+  \caption{Variance shares of the common factors \\
+  (\acs{KSS} method)}
+  \centering
+  \begin{tabular}{cc}
+    \hline 
+    Common factor & Share of total variance of \( v_i(t) \) \\
+    \hline 
+    \( \hat{f}_1(t) \) & 73.54\% \\
+    \( \hat{f}_2(t) \) & 20.2\% \\
+    \( \hat{f}_3(t) \) & 5.12\% \\
+    \( \hat{f}_4(t) \) & 1.14\% \\
+    \hline
+  \end{tabular}
+  \label{tab:variance_appendix}
+\end{table}
+
+
+\begin{figure}
+  \caption{Estimated Common Factors and Factor-Structure \\
+(\ac{KSS} method)}
+  \centering
+  \includegraphics[width=\textwidth]{Images/factors_kss_reduced.png}
+  \label{fig:image4}
+\end{figure}
+
+
+ 
+
+
+\begin{sidewaystable}
+\caption{Effect of Democracy on GDP per capita \\
+(\ac{KSS} method, Bootstrap Regression Analysis)}\label{KSS_results_appendix}
+    \label{tab:full_table}
+    \small
+    \centering
+    \resizebox{\textwidth}{!}{%
+        \begin{tabular}{cccccc}
+            \hline
+            & Democracy & Log GDP, first lag & Log GDP, second lag & Log GDP, third lag & Log GDP, fourth lag \\
+            \hline 
+            Original Estimate & -0.0017 & -0.1874 & -0.2240 & -0.1331 & -0.1155 \\
+            Bias & 0.0007 & 0.0063 & -0.00003 & 0.0021 & -0.0015 \\
+            Bootstrap Standard Error & 0.0109 & 0.2563 & 0.0841 & 0.0451 & 0.0243 \\
+            Median & -0.0009 & -0.1475 & -0.2065 & -0.1224 & -0.1163 \\
+            Normal 95\% CI & (-0.0238, 0.0190) & (-0.6960, 0.3085) & (-0.3888, -0.0591) & (-0.2236, -0.0468) & (-0.1617, -0.0664) \\
+            Percentile 95\% CI & (-0.0227, 0.0209) & (-0.6811, 0.1767) & (-0.4004, -0.0998) & (-0.2292, -0.0638) & (-0.1665, -0.0712) \\
+            BCa 95\% CI & (-0.0228, 0.0208) & (-0.7029, 0.1603) & (-0.4175, -0.1084) & (-0.2394, -0.0688) & (-0.1671, -0.0716) \\
+            \hline
+        \end{tabular}%
+    }
+\end{sidewaystable}
+
+\begin{figure}[htb]
+  \caption{Histogram and Density Plot of Bootstrap Regression Coefficients for Democracy \\
+  (\ac{KSS} method)}
+  \centering
+  \includegraphics[width=\textwidth]{Images/kss_hist.png}
+  \label{fig:image5}
+\end{figure}
+
+
+\subsection{Bootstrap-Regression Analysis via the \acs{Eup} method}\label{eup_apendix}
+
+\begin{sidewaystable}
+\caption{Effect of Democracy on GDP per capita growth \\
+(\ac{Eup} method, Bootstrap-regression analysis)}
+\label{eup_results_appendix}
+\footnotesize
 \centering
-\caption{Slope-Coefficients}
-\label{tab:slope_coefficients}
-\begin{tabular}{lcccccc}
-\toprule
- & Estimate & Std.Err & Z value & Pr(>z) \\
-\midrule
-dem & -0.000210 & 0.000259 & -0.81 & 0.418 \\
-lag(l.d.gdp.a, 1) & 0.268000 & 0.022200 & 12.00 & $<$2e-16 *** \\
-lag(l.d.gdp.a, 2) & 0.021100 & 0.022700 & 0.93 & 0.352 \\
-lag(l.d.gdp.a, 3) & -0.019400 & 0.022200 & -0.87 & 0.384 \\
-lag(l.d.gdp.a, 4) & 0.021600 & 0.020800 & 1.04 & 0.300 \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-\textbf{Call:}
-
-\texttt{Eup.default(formula = l.d.gdp.a \textasciitilde\ dem + lag(l.d.gdp.a, 1) + lag(l.d.gdp.a, 2) + lag(l.d.gdp.a, 3) + lag(l.d.gdp.a, 4) - 1,}\\
-\texttt{additive.effects = "twoways", dim.criterion = "PC3", error.type = 5)}
-
-\textbf{Residuals:}
-
-\begin{tabular}{lllll}
-Min & 1Q & Median & 3Q & Max \\
--0.025100 & -0.001840 & 0.000138 & 0.002140 & 0.019000 \\
-\end{tabular}
-
-\textbf{Additive Effects Type:} twoways
-
-\textbf{Dimension of the Unobserved Factors:} 7
-
-\textbf{Residual standard error:} 0.004821 on 2325 degrees of freedom, \textbf{R-squared:} 0.7418
-
-\end{document}
+%\resizebox{\textwidth}{!}{%
+\begin{tabular}{cccccc}
+\hline
+ & Democracy & $\Delta$ Log GDP, first lag &  $\Delta$ Log GDP, second lag & $\Delta$ Log GDP, third lag &  $\Delta$ Log GDP, fourth lag \\
+\hline 
+Original Estimate & -0.00201 & -0.57100 & -0.56100 & -0.42300 & -0.28300 \\
+Bias & 0.00052 & 0.00062 & -0.00007 & -0.00004 & 0.00007 \\
+Bootstrap Standard Error & 0.0048 & 0.0010 & 0.0011 & 0.0010 & 0.0007 \\
+Median Estimate & -0.00152 & -0.57000 & -0.56100 & -0.42300 & -0.28300 \\
+Normal 95\% CI & (-0.0120, 0.0069) & (-0.5736, -0.5697) & (-0.5630, -0.5589) & (-0.4248, -0.4211) & (-0.2845, -0.2817) \\
+Percentile 95\% CI & (-0.0108, 0.0080) & (-0.5730, -0.5690) & (-0.5640, -0.5590) & (-0.4250, -0.4210) & (-0.2840, -0.2810) \\
+BCa 95\% CI & (-0.0119, 0.0069) & (-0.5820, -0.5710) & (-0.5717, -0.5610) & (-0.4297, -0.4230) & (-0.2880, -0.2830) \\
+\hline
+\end{tabular}%
+%}
+\end{sidewaystable}
+\end{appendix}
+\clearpage
 
 
 
-\begin{table}[ht]
-\centering
-\caption{Bootstrap results} 
-\begin{tabular}{rrr}
-  \hline 
- & lower\_bound\_95 & upper\_bound\_95 \\ 
-  \hline 
-dem & -0.61 & -0.24 \\ 
-  inv & 1.17 & 3.32 \\ 
-  l.capital & -0.27 & 0.28 \\ 
-  tfp & -0.28 & 0.44 \\ 
-  gvt & -7.11 & -0.99 \\ 
-  gvt2 & -8.48 & 5.04 \\ 
-  hc & 0.84 & 1.23 \\ 
-  lifeexp & 0.07 & 0.09 \\ 
-  trade & -2.90 & -2.02 \\ 
-   \hline 
-\end{tabular}
-\end{table}
 
 
-\bibliography{bibliograpy.bib}
 
 
 \end{document} 

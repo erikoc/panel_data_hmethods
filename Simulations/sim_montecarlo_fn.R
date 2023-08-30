@@ -24,7 +24,7 @@ extract_simulation_results <- function(sim_results) {
   for (i in 1:nsim) {
     
     # Loop over each type (KSS, Eup, Within, Bai)
-    for (type in c("KSS", "Eup", "Within", "Bai")) {
+    for (type in c("KSS", "Eup", "Within", "Bai", "Bai.true")) {
       
       # Select metrics based on the type
       if (type == "Within") {
@@ -48,7 +48,7 @@ extract_simulation_results <- function(sim_results) {
 }
 
 
-doMonteCarlo <- function(nsim, T, n, beta, DGP = "K3", endogenous = FALSE, error = "homo", rho = 0.5, error.type = 1) {
+doMonteCarlo <- function(nsim, T, n, beta, DGP = "K3", endogenous = FALSE, error = "homo", error.type = 1, true.dim = FALSE) {
   #' Run Monte Carlo simulation for panel data models
   #'
   #' This function performs a Monte Carlo simulation to estimate panel data models using various methods.
@@ -74,7 +74,6 @@ doMonteCarlo <- function(nsim, T, n, beta, DGP = "K3", endogenous = FALSE, error
   exported_functions <- c("generate_X", "shift_mean", 
                           "generate_V1", "generate_V2", 
                           "generate_V3", "generate_V4", 
-                          "generate_V5", "generate_V6",
                           "generate_panel_errors", "endogenous_X", 
                           "create_plm_data", "create_Tn_mat",
                           "DataGeneratingFunction")
@@ -86,33 +85,59 @@ doMonteCarlo <- function(nsim, T, n, beta, DGP = "K3", endogenous = FALSE, error
                          .export = exported_functions) %dopar% {
                            
                            # Generate data
-                           data <- DataGeneratingFunction(T, n, beta, DGP, endogenous, error, rho)
+                           data <- DataGeneratingFunction(T, n, beta, DGP, endogenous, error)
                            data_plm <- data[["plm"]]
                            data_Tn <-  data[["Tn"]]
+                           d.true <- data[["d"]]
+                          
                            
                            # Perform estimation using method 1 (KSS)
-                           KSS.fit <- KSS(data_Tn$Y ~ data_Tn$X_1 + data_Tn$X_2 - 1)
-                           KSS.fit.summary <- summary(KSS.fit)
                            
-                           # Store results
-                           KSS_results <- list(
-                             b1 = KSS.fit$slope.para[1],
-                             b2 = KSS.fit$slope.para[2],
-                             used.dim = KSS.fit$used.dim,
-                             sd1 = sqrt(KSS.fit$beta.V[1, 1]),
-                             sd2 = sqrt(KSS.fit$beta.V[2, 2]),
-                             b1.bias = KSS.fit$slope.para[1] - beta[1],
-                             b2.bias = KSS.fit$slope.para[2] - beta[2],
-                             mse.effect = (1/n) * (1/T) * sum((KSS.fit$unob.fact.stru - data_Tn$V)^2),
-                             mse = (1/n) * (1/T) * sum(KSS.fit$residuals^2),
-                             power1 = KSS.fit.summary$coefficients[1,4] < 0.05,
-                             power2 = KSS.fit.summary$coefficients[2,4] < 0.05
-                           )
-                           KSS_results$mse.coeff <- mean((KSS_results$b1 - beta[1])^2, (KSS_results$b2 - beta[2])^2)
+                           if (true.dim == FALSE){
+                             KSS.fit <- KSS(data_Tn$Y ~ data_Tn$X_1 + data_Tn$X_2 - 1)
+                             KSS.fit.summary <- summary(KSS.fit)
+                             
+                             # Store results
+                             KSS_results <- list(
+                               b1 = KSS.fit$slope.para[1],
+                               b2 = KSS.fit$slope.para[2],
+                               used.dim = KSS.fit$used.dim,
+                               sd1 = sqrt(KSS.fit$beta.V[1, 1]),
+                               sd2 = sqrt(KSS.fit$beta.V[2, 2]),
+                               b1.bias = KSS.fit$slope.para[1] - beta[1],
+                               b2.bias = KSS.fit$slope.para[2] - beta[2],
+                               mse.effect = (1/n) * (1/T) * sum((KSS.fit$unob.fact.stru - data_Tn$V)^2),
+                               mse = (1/n) * (1/T) * sum(KSS.fit$residuals^2),
+                               power1 = KSS.fit.summary$coefficients[1,4] < 0.05,
+                               power2 = KSS.fit.summary$coefficients[2,4] < 0.05
+                             )
+                             KSS_results$mse.coeff <- mean((KSS_results$b1 - beta[1])^2, (KSS_results$b2 - beta[2])^2)
+                           } else if (true.dim == TRUE){
+                             KSS.fit <- KSS(data_Tn$Y ~ data_Tn$X_1 + data_Tn$X_2 - 1, factor.dim = d.true)
+                             KSS.fit.summary <- summary(KSS.fit)
+                             
+                             # Store results
+                             KSS_results <- list(
+                               b1 = KSS.fit$slope.para[1],
+                               b2 = KSS.fit$slope.para[2],
+                               used.dim = KSS.fit$used.dim,
+                               sd1 = sqrt(KSS.fit$beta.V[1, 1]),
+                               sd2 = sqrt(KSS.fit$beta.V[2, 2]),
+                               b1.bias = KSS.fit$slope.para[1] - beta[1],
+                               b2.bias = KSS.fit$slope.para[2] - beta[2],
+                               mse.effect = (1/n) * (1/T) * sum((KSS.fit$unob.fact.stru - data_Tn$V)^2),
+                               mse = (1/n) * (1/T) * sum(KSS.fit$residuals^2),
+                               power1 = KSS.fit.summary$coefficients[1,4] < 0.05,
+                               power2 = KSS.fit.summary$coefficients[2,4] < 0.05
+                             )
+                             KSS_results$mse.coeff <- mean((KSS_results$b1 - beta[1])^2, (KSS_results$b2 - beta[2])^2)
+                             
+                           }
+                           
 
-                           
+                           criterion <- ifelse(DGP == "K2", "IPC1", "PC1")
                            # Perform estimation using method 2 (Eup)
-                           Eup.fit <- Eup(data_Tn$Y ~ data_Tn$X_1 + data_Tn$X_2 - 1)
+                           Eup.fit <- Eup(data_Tn$Y ~ data_Tn$X_1 + data_Tn$X_2 - 1, dim.criterion = criterion)
                            Eup.fit.summary <- summary(Eup.fit, error.type = error.type)
                            Eup_results <- list(
                              b1 = Eup.fit.summary$coefficients[1,1],
@@ -131,7 +156,8 @@ doMonteCarlo <- function(nsim, T, n, beta, DGP = "K3", endogenous = FALSE, error
                            Eup_results$mse.coeff <- mean((Eup_results$b1 - beta[1])^2, (Eup_results$b2 - beta[2])^2)
 
                            
-                           # Perform estimation using Bai's method (similar to Eup)
+                    
+                           # Perform estimation using Bai's method 
                            Bai.fit <- Eup(data_Tn$Y ~ data_Tn$X_1 + data_Tn$X_2 - 1, factor.dim = 8)
                            Bai.fit.summary <- summary(Bai.fit, error.type = error.type)
                            Bai_results <- list(
@@ -144,14 +170,32 @@ doMonteCarlo <- function(nsim, T, n, beta, DGP = "K3", endogenous = FALSE, error
                              b2.bias = Bai.fit$slope.para[2] - beta[2],
                              mse.effect = (1/n) * (1/T) * sum((Bai.fit$unob.fact.stru - data_Tn$V)^2),
                              mse = (1/n) * (1/T) * sum(Bai.fit$residuals^2),
-                             p1 = Bai.fit.summary$coefficients[1,4],
-                             p2 = Bai.fit.summary$coefficients[2,4]
+                             power1 = Bai.fit.summary$coefficients[1,4] < 0.05,
+                             power2 = Bai.fit.summary$coefficients[2,4] < 0.05
                            )
                            
                            Bai_results$mse.coeff <- mean((Bai_results$b1 - beta[1])^2, (Bai_results$b2 - beta[2])^2)
-                           Bai_results$power1 <- Bai_results$p1 < 0.05
-                           Bai_results$power2 <- Bai_results$p2 < 0.05
-                        
+
+                           
+                           # Perform estimation using Bai's method - with true dimension
+                           Bai.fit.true <- Eup(data_Tn$Y ~ data_Tn$X_1 + data_Tn$X_2 - 1, factor.dim = d.true)
+                           Bai.fit.true.summary <- summary(Bai.fit.true, error.type = error.type)
+                           Bai.true_results <- list(
+                             b1 = Bai.fit.true.summary$coefficients[1,1],
+                             b2 = Bai.fit.true.summary$coefficients[2,1],
+                             used.dim = Bai.fit.true$used.dim,
+                             sd1 = Bai.fit.true.summary$coefficients[1, 2],
+                             sd2 = Bai.fit.true.summary$coefficients[2, 2],
+                             b1.bias = Bai.fit.true$slope.para[1] - beta[1],
+                             b2.bias = Bai.fit.true$slope.para[2] - beta[2],
+                             mse.effect = (1/n) * (1/T) * sum((Bai.fit.true$unob.fact.stru - data_Tn$V)^2),
+                             mse = (1/n) * (1/T) * sum(Bai.fit.true$residuals^2),
+                             power1 = Bai.fit.true.summary$coefficients[1,4] < 0.05,
+                             power2 = Bai.fit.true.summary$coefficients[2,4] < 0.05
+                           )
+                           
+                           Bai.true_results$mse.coeff <- mean((Bai.true_results$b1 - beta[1])^2, (Bai.true_results$b2 - beta[2])^2)
+
                            
                            # Perform estimation using method 3 (Within)
                            Within.fit <- plm(data_plm$Y ~ data_plm$X_1 + data_plm$X_2 - 1, data = data_plm, model = "within", effects = "individual")
@@ -173,7 +217,7 @@ doMonteCarlo <- function(nsim, T, n, beta, DGP = "K3", endogenous = FALSE, error
                              )
                              
                              
-                           } else if (error == "autocorr") {
+                           } else if (error == "autocorr_low" | error == "autocorr_high" ) {
                              robust_se <- coeftest(Within.fit, vcov = vcovHC(Within.fit, type = "sss"))
                              
                              Within_results <- list(
@@ -208,7 +252,7 @@ doMonteCarlo <- function(nsim, T, n, beta, DGP = "K3", endogenous = FALSE, error
                            Within_results$mse.coeff <- mean((Within_results$b1 - beta[1])^2, (Within_results$b2 - beta[2])^2)
                            
                            # Return a list of results for this simulation
-                           list(KSS = KSS_results, Eup = Eup_results, Within = Within_results, Bai = Bai_results)
+                           list(KSS = KSS_results, Eup = Eup_results, Within = Within_results, Bai = Bai_results, Bai.true = Bai.true_results)
                          }
   
   stopCluster(cl)

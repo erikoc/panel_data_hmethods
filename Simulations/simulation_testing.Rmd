@@ -57,6 +57,7 @@ colMeans(X[(1+ 2*group_size):(3*group_size),])
 
 
 ```{r}
+library(tseries)
 
 # 0. Generate vectors of interest
 
@@ -65,9 +66,7 @@ v_list <- list()
 V_list <- list(V1 = generate_V1(T, n),
               V2 = generate_V2(T, n),
               V3 = generate_V3(T, n),
-              V4 = generate_V4(T, n),
-              V5 = generate_V5(T, n),
-              V6 = generate_V6(T, n))
+              V4 = generate_V4(T, n))
 
 # 1. Perform the length and NA checks using a loop
 
@@ -85,6 +84,16 @@ for (i in 1:length(V_list)) {
   plot(1:T, V_list[[i]][start:end], type = "l", xlab = "Time", ylab = "Individual Effects",
        main = paste("Individual Effects (V",i,") over Time - Interval:", interval))
 }
+
+
+# 3. Test for unit-root factors 
+adf.test(V_list[["V1"]])
+adf.test(V_list[["V2"]])
+adf.test(V_list[["V3"]])
+adf.test(V_list[["V4"]])
+
+
+
 
 ```
 
@@ -154,7 +163,7 @@ plot(e[1:n], type = "p", xlab = "Observation", ylab = "Error", main = "Panel Err
 
 # 2. Autocorrelated errors
 
-e <- generate_panel_errors(T, n, X, error = "autocorr", rho = 0.8) 
+e <- generate_panel_errors(T, n, X, error = "autocorr_low") 
 
 plot(e[1:T], type = "l", xlab = "Observation", ylab = "Error", main = "Panel Errors")
 ```
@@ -206,24 +215,26 @@ T <- 12
 
 beta <- c(0.5,0.5)
 
-data <- DataGeneratingFunction(T, n, beta = beta, DGP = "K1" , endogenous = FALSE, error = "homo", rho = 0.5)
+data <- DataGeneratingFunction(T, n, beta = beta, DGP = "K1" , endogenous = FALSE, error = "homo")
 data_plm <- data[["plm"]]
 data_Tn <-  data[["Tn"]]
+d <- data[["d"]]
 
 KSS.fit <- KSS(data_Tn$Y ~ data_Tn$X_1 + data_Tn$X_2 -1)
 summary(KSS.fit)
-#plot(summary(KSS.fit))
+plot(summary(KSS.fit))
 
 
-#Eup.fit <- Eup(data_Tn$Y ~ data_Tn$X_1 + data_Tn$X_2 -1, dim.criterion = "PC1", d.max = 6)
-#summary(Eup.fit)
-#plot(summary(Eup.fit))
+Eup.fit <- Eup(data_Tn$Y ~ data_Tn$X_1 + data_Tn$X_2 -1, dim.criterion = "PC1")
+summary(Eup.fit)
+plot(summary(Eup.fit))
 
-#plm_fit <- plm(data_plm$Y ~ data_plm$X_1 + data_plm$X_2 -1, data = data_plm,  model = "within")
-#summary(plm_fit)
+OptDim(Eup.fit)
 
-#coeftest(plm_fit, vcov = vcovHC(plm_fit, type = "sss"))
-#x <- y coeftest(plm_fit, vcov=vcovHC(plm_fit,type="HC0",cluster="group"))
+plm_fit <- plm(data_plm$Y ~ data_plm$X_1 + data_plm$X_2 -1, data = data_plm,  model = "within")
+summary(plm_fit)
+
+
 ```
 
 8. `doMonteCarlo`
@@ -239,13 +250,9 @@ T <- 12
 beta <- c(0.5,0.5)
 nsim <- 10
 
-timing <- system.time({results <- doMonteCarlo(nsim, T, n, beta = beta, DGP = "K1" , endogenous = FALSE, error = "hetero_both", rho = 0.5)})
+timing <- system.time({results <- doMonteCarlo(nsim, T, n, beta = beta, DGP = "K1", endogenous = FALSE, error = "autocorr_high",true.dim = FALSE)})
 print(timing)
 
 
-
-```
-
-```{r}
 
 ```

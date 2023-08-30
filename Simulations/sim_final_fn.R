@@ -9,10 +9,10 @@ calculate_means <- function(results, path, estimator) {
   sd1_mean <- mean(results[[path]][[estimator]]$sd1)
   sd2_mean <- mean(results[[path]][[estimator]]$sd2)
   mse_mean <- mean(results[[path]][[estimator]]$mse.coeff)
-  power1_mean <- mean(results[[path]][[estimator]]$power1) # Assuming p1 is the p-value for b1
-  power2_mean <- mean(results[[path]][[estimator]]$power2) # Assuming p2 is the p-value for b2
+  power1_mean <- mean(results[[path]][[estimator]]$power1) 
+  power2_mean <- mean(results[[path]][[estimator]]$power2) 
   
-  if (estimator %in% c("KSS", "Eup", "Bai")) {
+  if (estimator %in% c("KSS", "Eup", "Bai", "Bai.true")) {
     mse_effects_mean <- mean(results[[path]][[estimator]]$mse.effect)
     used.dim_mean <- mean(results[[path]][[estimator]]$used.dim)
     return(list(b1_mean = b1_mean, b2_mean = b2_mean, sd1_mean = sd1_mean, sd2_mean = sd2_mean, mse_mean = mse_mean, power1_mean = power1_mean, power2_mean = power2_mean, mse_effects_mean = mse_effects_mean, used.dim_mean = used.dim_mean))
@@ -21,12 +21,11 @@ calculate_means <- function(results, path, estimator) {
   }
 }
 
-
 calculate_means_for_paths_and_estimators <- function(all_results, DGP, 
                                                      paths = c("T12_n30_nsim1000_", "T30_n30_nsim1000_", 
                                                                "T12_n100_nsim1000_", "T30_n100_nsim1000_", 
                                                                "T12_n300_nsim500_", "T30_n300_nsim500_"), 
-                                                     estimators = c("Eup", 'Bai', "KSS", "Within")) {
+                                                     estimators = c("Eup", "KSS", "Within", "Bai", "Bai.true")) {
   #' Calculate means for specified paths and estimatWors
   #'
   #' This function loops through each specified path and estimator,
@@ -54,16 +53,17 @@ calculate_means_for_paths_and_estimators <- function(all_results, DGP,
 }
 
 
+
 generate_latex_table <- function(all_means_list, DGP){
-  categories <- c('KSS', 'Bai', 'Eup', 'Within') 
+  categories <- c('KSS', 'Bai', 'Bai.true', 'Eup', 'Within') 
   T_values <- c('T12', 'T30')
   n_values <- c('n30', 'n100', 'n300')
   
-  cat('\\begin{tabular}{ccccccccc}', "\n") 
+  cat('\\begin{tabular}{ccccccccccc}', "\n") 
   cat('\\hline', "\n")
-  cat('\\multicolumn{9}{c}{MSE, Bias, Variance for Coefficients} \\\\ \\hline', "\n")
-  cat('& \\multicolumn{4}{c}{$T=12$} & \\multicolumn{4}{c}{$T=30$} \\\\ \\cline{2-5} \\cline{6-9}', "\n") 
-  cat('& KSS &  Bai & Eup & Within & KSS & Bai &  Eup & Within \\\\') 
+  cat('\\multicolumn{10}{c}{MSE, Bias, Variance and Power for the Common Slope Coefficients} \\\\ \\hline', "\n") 
+  cat('& \\multicolumn{5}{c}{$T=12$} & \\multicolumn{5}{c}{$T=30$} \\\\ \\cline{2-6} \\cline{7-11}', "\n") 
+  cat('& KSS & $ \\text{Bai}_{\\hat{d} = 8}$ & $\\text{Bai}_{\\hat{d} = d}$& Eup & Within & KSS & \\text{Bai}_{\\hat{d} = 8} & \\text{Bai}_{\\hat{d} = d} & Eup & Within \\\\') 
   
   for (n in n_values){
     nsim_value <- ifelse(n == "n300", "nsim500", "nsim1000")
@@ -71,60 +71,90 @@ generate_latex_table <- function(all_means_list, DGP){
     
     cat('\\multicolumn{8}{l}{$n =', n_display, '} \\\\') 
     
-    cat('MSE ')
+    cat('$\\text{MSE}_\\hat{\\beta}$')
     for (T in T_values){
       for (cat in categories){
         key <- paste(T, '_', n, '_', nsim_value, '_', DGP,  sep = '')
         if (cat %in% names(all_means_list[[key]])){
-          cat(' &', format(round(all_means_list[[key]][[cat]]$mse_mean, 5), nsmall=5))
+          cat(' &', format(round(all_means_list[[key]][[cat]]$mse_mean, 4), nsmall=4, scientific=FALSE))
         } else {
           cat(' & NULL')
         }
       }
     }
+    cat('\\\\')
     
-    cat('\\\\ BIAS1 ')
+    cat('Bias $\\hat{\\beta}_1$')
     for (T in T_values){
       for (cat in categories){
         key <-  paste(T, '_', n, '_', nsim_value, '_', DGP,  sep = '')
         if (cat %in% names(all_means_list[[key]])){
-          cat(' &', format(round(all_means_list[[key]][[cat]]$b1_mean, 5), nsmall=4))
+          cat(' &', format(round(all_means_list[[key]][[cat]]$b1_mean, 4), nsmall=4, scientific=FALSE))
         } else {
           cat(' & NULL')
         }
       }
     }
+    cat('\\\\')
     
-    cat('\\\\ BIAS2 ')
+    cat('Bias $\\hat{\\beta}_2$')
     for (T in T_values){
       for (cat in categories){
         key <-  paste(T, '_', n, '_', nsim_value, '_', DGP,  sep = '')
         if (cat %in% names(all_means_list[[key]])){
-          cat(' &', format(round(all_means_list[[key]][[cat]]$b2_mean, 5), nsmall=5))
+          cat(' &', format(round(all_means_list[[key]][[cat]]$b2_mean, 4), nsmall=4, scientific=FALSE))
         } else {
           cat(' & NULL')
         }
       }
     }
+    cat('\\\\')
     
-    cat('\\\\ VAR1 ')
+    cat('$\\text{Var}(\\hat{\\beta}_1)$')
     for (T in T_values){
       for (cat in categories){
         key <-  paste(T, '_', n, '_', nsim_value, '_', DGP,  sep = '')
         if (cat %in% names(all_means_list[[key]])){
-          cat(' &', format(round(all_means_list[[key]][[cat]]$sd1_mean, 5), nsmall=5))
+          cat(' &', format(round(all_means_list[[key]][[cat]]$sd1_mean, 4), nsmall=4, scientific=FALSE))
         } else {
           cat(' & NULL')
         }
       }
     }
+    cat('\\\\')
     
-    cat('\\\\ VAR2 ')
+    cat('$\\text{Var}(\\hat{\\beta}_2)$')
     for (T in T_values){
       for (cat in categories){
         key <-  paste(T, '_', n, '_', nsim_value, '_', DGP,  sep = '')
         if (cat %in% names(all_means_list[[key]])){
-          cat(' &', format(round(all_means_list[[key]][[cat]]$sd2_mean, 5), nsmall=5))
+          cat(' &', format(round(all_means_list[[key]][[cat]]$sd2_mean, 4), nsmall=4, scientific=FALSE))
+        } else {
+          cat(' & NULL')
+        }
+      }
+    }
+    cat('\\\\')
+    
+    cat('Power $\\hat{\\beta}_1$')
+    for (T in T_values){
+      for (cat in categories){
+        key <-  paste(T, '_', n, '_', nsim_value, '_', DGP,  sep = '')
+        if (cat %in% names(all_means_list[[key]])){
+          cat(' &', format(round(all_means_list[[key]][[cat]]$power1_mean, 4), nsmall=4, scientific=FALSE))
+        } else {
+          cat(' & NULL')
+        }
+      }
+    }
+    cat('\\\\')
+    
+    cat('Power $\\hat{\\beta}_2$')
+    for (T in T_values){
+      for (cat in categories){
+        key <-  paste(T, '_', n, '_', nsim_value, '_', DGP,  sep = '')
+        if (cat %in% names(all_means_list[[key]])){
+          cat(' &', format(round(all_means_list[[key]][[cat]]$power2_mean, 4), nsmall=4, scientific=FALSE))
         } else {
           cat(' & NULL')
         }
@@ -136,13 +166,14 @@ generate_latex_table <- function(all_means_list, DGP){
   cat('\\end{tabular}', "\n")
 }
 
+
 generate_latex_mse_effects_table <- function(results_type, DGP) {
   n_values <- c(30, 100, 300)
   T_values <- c(12, 30)
   
-  cat('\\begin{tabular}{lccccccc}', "\n") # Added one more column
-  cat('\\hline \\multicolumn{7}{c}{MSE of Effects} \\\\ \\hline', "\n") # Updated the number of columns
-  cat('$n$ & $T$ & KSS & Bai & Eup & $d_{KSS}$ & $d_{Bai}$ & $d_{Eup}$ \\\\\n') # Added 'Bai'
+  cat('\\begin{tabular}{lccccccccc}', "\n")
+  cat('\\hline \\multicolumn{8}{c}{MSE of the Time-Varying Individual Effects} \\\\ \\hline', "\n")
+  cat('$n$ & $T$ & KSS & $ \\text{Bai}_{\\hat{d} = 8}$ & $\\text{Bai}_{\\hat{d} = d}$ & Eup & $\\hat{d}_{KSS}$ & $\\hat{d}_{Eup}$ \\\\\n')
   cat('\\hline\n')
   
   for (n in n_values) {
@@ -156,12 +187,12 @@ generate_latex_mse_effects_table <- function(results_type, DGP) {
         cat("&", T)
       }
       
-      cat(" & ", format(round(results_type[[key]]$KSS$mse_effects_mean, 4), nsmall=4),
-          " & ", format(round(results_type[[key]]$Bai$mse_effects_mean, 4), nsmall=4), 
-          " & ", format(round(results_type[[key]]$Eup$mse_effects_mean, 4), nsmall=4),
-          " & ", format(round(results_type[[key]]$KSS$used.dim_mean, 4), nsmall=4),
-          " & ", format(round(results_type[[key]]$Bai$used.dim_mean, 4), nsmall=4), 
-          " & ", format(round(results_type[[key]]$Eup$used.dim_mean, 4), nsmall=4),
+      cat(" & ", format(round(results_type[[key]]$KSS$mse_effects_mean, 4), nsmall=4, scientific=FALSE),
+          " & ", format(round(results_type[[key]]$Bai$mse_effects_mean, 4), nsmall=4, scientific=FALSE), 
+          " & ", format(round(results_type[[key]]$Bai.true$mse_effects_mean, 4), nsmall=4, scientific=FALSE),
+          " & ", format(round(results_type[[key]]$Eup$mse_effects_mean, 4), nsmall=4, scientific=FALSE),
+          " & ", format(round(results_type[[key]]$KSS$used.dim_mean, 4), nsmall=4, scientific=FALSE),
+          " & ", format(round(results_type[[key]]$Eup$used.dim_mean, 4), nsmall=4, scientific=FALSE),
           " \\\\\n")
     }
   }
